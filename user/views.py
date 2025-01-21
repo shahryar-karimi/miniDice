@@ -1,3 +1,5 @@
+from django.utils import timezone
+
 from drf_yasg import openapi
 from drf_yasg.utils import swagger_auto_schema
 from rest_framework import status
@@ -5,8 +7,7 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from user.models import Player
-from user.models import Prediction
-from user.serializers import PredictDiceSerializer
+from user.serializers import *
 
 
 class PredictDiceAPI(APIView):
@@ -27,7 +28,6 @@ class PredictDiceAPI(APIView):
     def post(self, request):
         user = request.user
         predicted_dices = PredictDiceSerializer(data=request.data)
-        print(request.data)
         predicted_dices.is_valid(raise_exception=True)
         predicted_dices.validated_data["player"] = user
         predicted_dices.save()
@@ -48,8 +48,36 @@ class PredictDiceAPI(APIView):
     )
     def get(self, request):
         player: "Player" = request.user
-        print(player.__str__())
         prediction = Prediction.objects.filter(player=player, is_active=True).order_by("-insert_dt").first()
         return Response({"dice_number1": prediction.dice_number1, "dice_number2": prediction.dice_number2},
                         status=status.HTTP_200_OK)
 
+
+class CountDownResultAPI(APIView):
+    @swagger_auto_schema(
+        operation_summary="count down expiration date",
+        operation_description="Get count down expiration date with result of the 2 dices.",
+        responses={200: openapi.Response(
+            description="Count down",
+            examples={
+                "application/json": {
+                    "dice_number1": 3,
+                    "dice_number2": 5
+                }
+            }
+        )},
+    )
+    def get(self, request):
+        count_down: "CountDownResult" = (CountDownResult.objects
+                                         .filter(expire_dt__gt=timezone.now(), is_active=True)
+                                         .order_by('expire_dt')
+                                         .first())
+        if count_down:
+            serializer = CountDownSerializer(data={"expire_dt": count_down.expire_dt,
+                                               "dice_number1": count_down.dice_number1,
+                                               "dice_number2": count_down.dice_number2})
+            serializer.is_valid(raise_exception=True)
+            print(serializer.data)
+            return Response(serializer.data, status=status.HTTP_200_OK)
+        else:
+            return Response({"error": "Active count down not found"}, status=status.HTTP_404_NOT_FOUND)

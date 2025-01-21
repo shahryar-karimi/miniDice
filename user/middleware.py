@@ -9,5 +9,4 @@ class TokenAuthMiddleware(MiddlewareMixin):
             token = auth_header.split(' ')[1]  # Extract token part
             backend = TokenAuthenticationBackend()
             user = backend.authenticate(request, token=token)
-            print(user.__str__())
             request.user = user
