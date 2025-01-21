@@ -1,0 +1,7 @@
+Django==5.1.5
+drf-yasg==1.21.8
+djangorestframework==3.15.2
+autoutils==1.0.0
+django-constance==4.2.0
+python-decouple==3.8
+python-telegram-bot==21.10
