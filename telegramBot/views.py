@@ -25,7 +25,7 @@ class TelegramAuthView(APIView):
                 }
             }
         )},
-        tags=["count down"]
+        tags=["Player"]
     )
     def post(self, request):
         # Extract Telegram data

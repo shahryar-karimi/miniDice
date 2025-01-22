@@ -13,7 +13,7 @@ class Player(AbstractModel):
     last_name = models.CharField(max_length=255, null=True)
     telegram_language_code = models.CharField(max_length=16, default='en')
     auth_token = models.CharField(max_length=255, null=True, blank=True)
-    wallet_address = models.CharField(max_length=255, null=True)
+    wallet_address = models.CharField(max_length=255, null=True, blank=True)
 
     USERNAME_FIELD = 'telegram_id'
     USERNAME_FIELDS = ['telegram_id', 'telegram_username']
@@ -52,10 +52,7 @@ class CountDown(AbstractModel):
         return self.expire_dt <= timezone.now()
 
     def end_countdown(self):
-        if self.is_finished():
-            if not self.is_active:
-                raise ValueError("Count down is already finished.")
-        else:
+        if not self.is_finished:
             raise ValueError("Count down time is not finished yet.")
 
 

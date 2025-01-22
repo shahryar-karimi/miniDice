@@ -5,3 +5,7 @@ autoutils==1.0.0
 django-constance==4.2.0
 python-decouple==3.8
 python-telegram-bot==21.10
+django-cors-headers==4.6.0
+psycopg2-binary==2.9.10
+django-autoutils==2.1.1
+django-redis==5.4.0

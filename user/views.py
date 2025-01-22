@@ -3,7 +3,6 @@ from drf_yasg.utils import swagger_auto_schema
 from rest_framework import status
 from rest_framework.response import Response
 from rest_framework.views import APIView
-from yaml import serialize
 
 from user.serializers import *
 
@@ -140,7 +139,7 @@ class ConnectWalletAPI(APIView):
     @swagger_auto_schema(
         operation_summary="Connect wallet",
         operation_description="Get wallet address and saves it for player.",
-        tags=["user"]
+        tags=["Player"]
     )
     def post(self, request):
         serializer = WalletAddressSerializer(request.data)
@@ -167,10 +166,9 @@ class PlayerInfoAPI(APIView):
                 }
             }
         )},
-        tags=["user"]
+        tags=["Player"]
     )
     def get(self, request):
         player = request.user
-        serializer = PlayerSerializer(data=player)
-        serializer.is_valid(raise_exception=True)
+        serializer = PlayerSerializer(player)
         return Response(serializer.data, status=status.HTTP_200_OK)

@@ -41,9 +41,7 @@ INSTALLED_APPS = [
     'telegramBot.apps.TelegrambotConfig',
     'constance',
     "constance.backends.database",
-    "corsheaders",
     "rest_framework",
-    "django_filters",
 ]
 
 MIDDLEWARE = [
@@ -60,6 +58,8 @@ MIDDLEWARE = [
 SESSION_ENGINE = "django.contrib.sessions.backends.cache"
 SESSION_CACHE_ALIAS = "default"
 ROOT_URLCONF = 'miniDice.urls'
+
+CSRF_TRUSTED_ORIGINS = config('CSRF_TRUSTED_ORIGINS').split(',')
 
 TEMPLATES = [
     {
@@ -168,7 +168,7 @@ USE_TZ = True
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/5.1/howto/static-files/
 
-STATIC_URL = 'static/'
+STATIC_URL = f"{BASE_DIR}/static/"
 
 CONSTANCE_BACKEND = "constance.backends.database.DatabaseBackend"
 CONSTANCE_DBS = "default"
