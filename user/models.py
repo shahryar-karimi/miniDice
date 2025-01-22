@@ -55,6 +55,10 @@ class CountDown(AbstractModel):
         if not self.is_finished:
             raise ValueError("Count down time is not finished yet.")
 
+    def save(self, *args, force_insert=False, force_update=False, using=None, update_fields=None):
+        CountDown.objects.filter(is_active=True).update(is_active=False)
+        super().save(force_insert, force_update, using, update_fields)
+
 
 class Prediction(AbstractModel):
     player = models.ForeignKey(Player, on_delete=models.CASCADE)
@@ -64,6 +68,7 @@ class Prediction(AbstractModel):
     countdown = models.ForeignKey(CountDown, on_delete=models.CASCADE, related_name='predictions')
 
     def save(self, *args, force_insert=False, force_update=False, using=None, update_fields=None):
+        Prediction.objects.filter(is_active=True, player=self.player).update(is_active=False)
         if self.countdown is None:
             self.countdown = CountDown.objects.get(is_active=True)
         super().save(force_insert, force_update, using, update_fields)
