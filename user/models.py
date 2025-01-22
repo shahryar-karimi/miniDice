@@ -1,12 +1,16 @@
 from django.contrib.auth.models import AbstractUser
 from django.core.validators import MinValueValidator, MaxValueValidator
 from django.db import models
+from django.utils import timezone
+from django.utils.functional import cached_property
 from django_autoutils.model_utils import AbstractModel
 
 
 class Player(AbstractModel):
     telegram_id = models.BigIntegerField(unique=True, primary_key=True)
     telegram_username = models.CharField(max_length=255, null=True)
+    first_name = models.CharField(max_length=255, null=True)
+    last_name = models.CharField(max_length=255, null=True)
     telegram_language_code = models.CharField(max_length=16, default='en')
     auth_token = models.CharField(max_length=255, null=True, blank=True)
     wallet_address = models.CharField(max_length=255, null=True)
@@ -22,20 +26,11 @@ class Player(AbstractModel):
         verbose_name = 'Player'
         verbose_name_plural = 'Players'
 
-
-class Prediction(AbstractModel):
-    player = models.ForeignKey(Player, on_delete=models.CASCADE)
-    dice_number1 = models.PositiveSmallIntegerField(validators=[MinValueValidator(1), MaxValueValidator(6)])
-    dice_number2 = models.PositiveSmallIntegerField(validators=[MinValueValidator(1), MaxValueValidator(6)])
-    is_win = models.BooleanField(default=False)
-
-    class Meta:
-        db_table = 'prediction'
-        verbose_name = 'Prediction'
-        verbose_name_plural = 'Predictions'
+    def send_token(self, amount):
+        pass
 
 
-class CountDownResult(AbstractModel):
+class CountDown(AbstractModel):
     expire_dt = models.DateTimeField()
     dice_number1 = models.PositiveSmallIntegerField(validators=[MinValueValidator(1), MaxValueValidator(6)],
                                                     null=True,
@@ -52,4 +47,31 @@ class CountDownResult(AbstractModel):
         verbose_name = 'CountDownResult'
         verbose_name_plural = 'CountDownResults'
 
+    @cached_property
+    def is_finished(self):
+        return self.expire_dt <= timezone.now()
 
+    def end_countdown(self):
+        if self.is_finished():
+            if not self.is_active:
+                raise ValueError("Count down is already finished.")
+        else:
+            raise ValueError("Count down time is not finished yet.")
+
+
+class Prediction(AbstractModel):
+    player = models.ForeignKey(Player, on_delete=models.CASCADE)
+    dice_number1 = models.PositiveSmallIntegerField(validators=[MinValueValidator(1), MaxValueValidator(6)])
+    dice_number2 = models.PositiveSmallIntegerField(validators=[MinValueValidator(1), MaxValueValidator(6)])
+    is_win = models.BooleanField(default=False)
+    countdown = models.ForeignKey(CountDown, on_delete=models.CASCADE, related_name='predictions')
+
+    def save(self, *args, force_insert=False, force_update=False, using=None, update_fields=None):
+        if self.countdown is None:
+            self.countdown = CountDown.objects.get(is_active=True)
+        super().save(force_insert, force_update, using, update_fields)
+
+    class Meta:
+        db_table = 'prediction'
+        verbose_name = 'Prediction'
+        verbose_name_plural = 'Predictions'

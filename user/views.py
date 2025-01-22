@@ -1,12 +1,10 @@
-from django.utils import timezone
-
 from drf_yasg import openapi
 from drf_yasg.utils import swagger_auto_schema
 from rest_framework import status
 from rest_framework.response import Response
 from rest_framework.views import APIView
+from yaml import serialize
 
-from user.models import Player
 from user.serializers import *
 
 
@@ -24,6 +22,7 @@ class PredictDiceAPI(APIView):
                 }
             }
         )},
+        tags=["predict"]
     )
     def post(self, request):
         user = request.user
@@ -45,6 +44,7 @@ class PredictDiceAPI(APIView):
                 }
             }
         )},
+        tags=["predict"]
     )
     def get(self, request):
         player: "Player" = request.user
@@ -61,23 +61,116 @@ class CountDownResultAPI(APIView):
             description="Count down",
             examples={
                 "application/json": {
-                    "dice_number1": 3,
-                    "dice_number2": 5
+                    "expire_dt": "2025-01-21 15:44:42.210841+03:30",
+                    "is_active": True
                 }
             }
         )},
+        tags=["count down"]
     )
     def get(self, request):
-        count_down: "CountDownResult" = (CountDownResult.objects
-                                         .filter(expire_dt__gt=timezone.now(), is_active=True)
-                                         .order_by('expire_dt')
-                                         .first())
+        count_down: "CountDown" = CountDown.objects.get(is_active=True)
         if count_down:
-            serializer = CountDownSerializer(data={"expire_dt": count_down.expire_dt,
-                                               "dice_number1": count_down.dice_number1,
-                                               "dice_number2": count_down.dice_number2})
+            serializer = CountDownTimeSerializer(data={"expire_dt": count_down.expire_dt,
+                                                       "is_active": count_down.is_active,
+                                                       "is_finished": count_down.is_finished})
             serializer.is_valid(raise_exception=True)
-            print(serializer.data)
             return Response(serializer.data, status=status.HTTP_200_OK)
         else:
             return Response({"error": "Active count down not found"}, status=status.HTTP_404_NOT_FOUND)
+
+
+class EndCountDownResultAPI(APIView):
+    @swagger_auto_schema(
+        operation_summary="count down expiration date",
+        operation_description="Get count down expiration date with result of the 2 dices.",
+        responses={200: openapi.Response(
+            description="Count down",
+            examples={
+                "application/json": {
+                    "expire_dt": "2025-01-21 15:44:42.210841+03:30",
+                    "dice_number1": 6,
+                    "dice_number2": 6
+                }
+            }
+        )},
+        tags=["count down"]
+    )
+    def get(self, request):
+        count_down: "CountDown" = CountDown.objects.get(is_active=True)
+        if count_down:
+            try:
+                count_down.end_countdown()
+            except Exception as e:
+                return Response(e.__str__(), status=status.HTTP_400_BAD_REQUEST)
+            serializer = CountDownSerializer(data={"expire_dt": count_down.expire_dt,
+                                                   "dice_number1": count_down.dice_number1,
+                                                   "dice_number2": count_down.dice_number2})
+            serializer.is_valid(raise_exception=True)
+            return Response(serializer.data, status=status.HTTP_200_OK)
+        else:
+            return Response({"error": "Active count down not found"}, status=status.HTTP_404_NOT_FOUND)
+
+
+class LastWinnersAPI(APIView):
+    @swagger_auto_schema(
+        operation_summary="count down expiration date",
+        operation_description="Get count down expiration date with result of the 2 dices.",
+        responses={200: openapi.Response(
+            description="Count down",
+            examples={
+                "application/json": {
+                    "expire_dt": "2025-01-21 15:44:42.210841+03:30",
+                    "dice_number1": 6,
+                    "dice_number2": 6
+                }
+            }
+        )},
+        tags=["count down"]
+    )
+    def get(self, request):
+        countdown: "CountDown" = CountDown.objects.get(is_active=True)
+        predictions = countdown.predictions.filter(is_win=True).all()
+        serializer = WinnersListSerializer(data=predictions)
+        serializer.is_valid(raise_exception=True)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
+
+class ConnectWalletAPI(APIView):
+    @swagger_auto_schema(
+        operation_summary="Connect wallet",
+        operation_description="Get wallet address and saves it for player.",
+        tags=["user"]
+    )
+    def post(self, request):
+        serializer = WalletAddressSerializer(request.data)
+        serializer.is_valid(raise_exception=True)
+        player = request.user
+        player.wallet_address = serializer.validated_data["wallet_address"]
+        player.save()
+        return Response(status=status.HTTP_200_OK)
+
+
+class PlayerInfoAPI(APIView):
+    @swagger_auto_schema(
+        operation_summary="count down expiration date",
+        operation_description="Get count down expiration date with result of the 2 dices.",
+        responses={200: openapi.Response(
+            description="Count down",
+            examples={
+                "application/json": {
+                    "expire_dt": "2025-01-21 15:44:42.210841+03:30",
+                    "telegram_id": 107290290,
+                    "telegram_username": "shahryarkarimi",
+                    "telegram_language_code": "en",
+                    "wallet_address": "0x91203981203912830192380"
+                }
+            }
+        )},
+        tags=["user"]
+    )
+    def get(self, request):
+        player = request.user
+        serializer = PlayerSerializer(data=player)
+        serializer.is_valid(raise_exception=True)
+        return Response(serializer.data, status=status.HTTP_200_OK)

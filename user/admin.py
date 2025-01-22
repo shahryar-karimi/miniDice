@@ -1,6 +1,6 @@
 from django.contrib import admin
 
-from user.models import Player, Prediction, CountDownResult
+from user.models import Player, Prediction, CountDown
 
 
 # Register your models here.
@@ -18,16 +18,16 @@ class PlayerAdmin(admin.ModelAdmin):
 
 @admin.register(Prediction)
 class PredictionAdmin(admin.ModelAdmin):
-    list_display = ("player", "dice_number1", "dice_number2", "is_win", "is_active")
+    list_display = ("player", "countdown", "dice_number1", "dice_number2", "is_win", "is_active")
     search_fields = ("dice_number1", "dice_number2")
-    list_filter = ("dice_number1", "dice_number2", "is_win", "is_active")
+    list_filter = ("dice_number1", "dice_number2", "is_win", "is_active", "countdown")
     fieldsets = (
         (None,
-         {'fields': ("player", "dice_number1", "dice_number2")},),
+         {'fields': ("player", "dice_number1", "dice_number2", "countdown")},),
     )
 
 
-@admin.register(CountDownResult)
+@admin.register(CountDown)
 class CountDownResultAdmin(admin.ModelAdmin):
     list_display = ("insert_dt", "expire_dt", "dice_number1", "dice_number2", "is_active")
     list_filter = ("is_active",)

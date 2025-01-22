@@ -98,6 +98,7 @@ REST_FRAMEWORK = {
 }
 
 WSGI_APPLICATION = 'miniDice.wsgi.application'
+TELEGRAM_BOT_TOKEN = config('TELEGRAM_BOT_TOKEN')
 
 # Database
 # https://docs.djangoproject.com/en/5.1/ref/settings/#databases

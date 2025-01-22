@@ -20,6 +20,8 @@ from django.conf.urls.i18n import i18n_patterns
 from django.conf.urls.static import static
 from django.contrib import admin
 from django.urls import path, include
+from telegram._games import game
+
 from miniDice import settings
 from drf_yasg.views import get_schema_view
 from drf_yasg import openapi
@@ -39,6 +41,7 @@ schema_view = get_schema_view(
 )
 urlpatterns = [
     path('admin/', admin.site.urls),
-    path('v1/', include("user.urls")),
-path("docs/", include("miniDice.docs")),
+    path('api/', include("user.urls")),
+    path('api/', include("telegramBot.urls")),
+    path("docs/", include("miniDice.docs")),
 ]
