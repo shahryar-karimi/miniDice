@@ -1,0 +1,50 @@
+
+services:
+  web:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: django_app
+    volumes:
+      - .:/app
+    expose:
+      - "8000"
+    depends_on:
+      - db
+
+  nginx:
+    image: nginx:latest
+    container_name: nginx_server
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./nginx:/etc/nginx/conf.d
+    depends_on:
+      - web
+
+  db:
+    image: postgres:15
+    container_name: postgres_db
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: postgres
+
+  master_bot:
+    command: ./commands/master_bot.sh
+    extends:
+      file: common.yml
+      service: web_base
+    env_file:
+      - .env
+    depends_on:
+      - db
+
+  redis:
+    image: redis
+    restart: always
+
+volumes:
+  postgres_data:

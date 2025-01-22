@@ -1,0 +1,8 @@
+services:
+  web_base:
+    build: ./
+    restart: unless-stopped
+    volumes:
+      - .:/app
+    env_file:
+      - .env
