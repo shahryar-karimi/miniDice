@@ -8,6 +8,7 @@ WORKDIR /app
 RUN apt-get update && apt-get install -y \
     build-essential \
     libpq-dev \
+    netcat-traditional \
     && rm -rf /var/lib/apt/lists/*
 
 # Install Python dependencies
@@ -16,9 +17,9 @@ RUN pip install --no-cache-dir -r requirements.txt gunicorn
 
 # Copy project files
 COPY . .
-
-# Expose port for Gunicorn
-EXPOSE 8000
-
-# Command to run Gunicorn
-CMD ["gunicorn", "--bind", "0.0.0.0:8000", "miniDice.wsgi:application"]
+#
+## Expose port for Gunicorn
+#EXPOSE 8000
+#
+## Command to run Gunicorn
+#CMD ["gunicorn", "--bind", "0.0.0.0:8000", "miniDice.wsgi:application"]

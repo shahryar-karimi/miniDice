@@ -9,6 +9,7 @@ services:
       - .:/app
     expose:
       - "8000"
+    command: "bash entrypoint.sh"
     depends_on:
       - db
 
@@ -23,24 +24,21 @@ services:
       - web
 
   db:
-    image: postgres:15
-    container_name: postgres_db
+    image: postgres:13-bullseye
     volumes:
       - postgres_data:/var/lib/postgresql/data
+    command: postgres
+    expose:
+      - 5432
+    ports:
+      - target: 5432
+        published: 2345
+        protocol: tcp
     environment:
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: postgres
-      POSTGRES_DB: postgres
-
-  master_bot:
-    command: ./commands/master_bot.sh
-    extends:
-      file: common.yml
-      service: web_base
-    env_file:
-      - .env
-    depends_on:
-      - db
+      - POSTGRES_DB=${DB_NAME}
+      - POSTGRES_USER=${DB_USER}
+      - POSTGRES_PASSWORD=${DB_PASS}
+    restart: on-failure
 
   redis:
     image: redis
