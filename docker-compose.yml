@@ -6,6 +6,8 @@ services:
     container_name: django_app
     volumes:
       - .:/app
+    networks:
+      - my_network
     expose:
       - "8000"
     depends_on:
@@ -15,6 +17,8 @@ services:
   nginx:
     image: nginx:latest
     container_name: nginx_server
+    networks:
+      - my_network
     ports:
       - "8000:80"
     volumes:
@@ -25,6 +29,8 @@ services:
   db:
     image: postgres:13-bullseye
     container_name: postgres_db
+    networks:
+      - my_network
     volumes:
       - postgres_data:/var/lib/postgresql/data
     ports:
@@ -33,13 +39,19 @@ services:
       - POSTGRES_DB=${DB_NAME}
       - POSTGRES_USER=${DB_USER}
       - POSTGRES_PASSWORD=${DB_PASS}
-#      - PGDATA=/var/lib/postgresql/data/pgdata
+      - PGDATA=/var/lib/postgresql/data/pgdata
     restart: on-failure
 
   redis:
     image: redis:latest
     container_name: redis_cache
     restart: always
+    networks:
+      - my_network
+
+networks:
+  my_network:
+    driver: bridge
 
 volumes:
   postgres_data:
