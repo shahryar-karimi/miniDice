@@ -6,6 +6,7 @@ from user.models import Prediction, CountDown, Player
 class PredictDiceSerializer(serializers.ModelSerializer):
     username = serializers.SerializerMethodField()
     amount = serializers.SerializerMethodField()
+
     class Meta:
         model = Prediction
         fields = ["username", "dice_number1", "dice_number2", "amount"]
@@ -33,9 +34,14 @@ class CountDownSerializer(serializers.ModelSerializer):
 
 
 class CountDownTimeSerializer(serializers.ModelSerializer):
+    is_finished = serializers.SerializerMethodField()
+
     class Meta:
         model = CountDown
-        fields = ["expire_dt", "amount"]
+        fields = ["expire_dt", "amount", "is_active", "is_finished"]
+
+    def get_is_finished(self, obj):
+        return obj.is_finished
 
 
 class PlayerSerializer(serializers.ModelSerializer):

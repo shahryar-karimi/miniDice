@@ -71,10 +71,7 @@ class CountDownResultAPI(APIView):
     def get(self, request):
         count_down: "CountDown" = CountDown.objects.get(is_active=True)
         if count_down:
-            serializer = CountDownTimeSerializer(data={"expire_dt": count_down.expire_dt,
-                                                       "is_active": count_down.is_active,
-                                                       "is_finished": count_down.is_finished})
-            serializer.is_valid(raise_exception=True)
+            serializer = CountDownTimeSerializer(count_down)
             return Response(serializer.data, status=status.HTTP_200_OK)
         else:
             return Response({"error": "Active count down not found"}, status=status.HTTP_404_NOT_FOUND)
