@@ -12,6 +12,7 @@ class Player(AbstractModel):
     first_name = models.CharField(max_length=255, null=True)
     last_name = models.CharField(max_length=255, null=True)
     telegram_language_code = models.CharField(max_length=16, default='en')
+    auth_token = models.CharField(max_length=255, null=True, blank=True)
     wallet_address = models.CharField(max_length=255, null=True, blank=True)
 
     USERNAME_FIELD = 'telegram_id'

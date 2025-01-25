@@ -18,7 +18,7 @@ class TokenAuthenticationBackend(BaseBackend):
         except User.DoesNotExist:
             pass
         try:
-            player = Player.objects.get(wallet_address=token)
+            player = Player.objects.get(auth_token=token)
             return player
         except Player.DoesNotExist:
             pass
