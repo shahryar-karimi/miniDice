@@ -7,14 +7,6 @@
         "maxLambdaSize": "15mb",
         "runtime": "python3.13"
       }
-    },
-    {
-      "src": "telegram_bot_run.py",
-      "use": "@vercel/python",
-      "config": {
-        "maxLambdaSize": "50mb",
-        "runtime": "python3.13"
-      }
     }
   ],
   "routes": [
