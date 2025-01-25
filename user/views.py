@@ -21,7 +21,7 @@ class PredictDiceAPI(APIView):
                 }
             }
         )},
-        tags=["predict"]
+        tags=["Predict"]
     )
     def post(self, request):
         user = request.user
@@ -43,7 +43,7 @@ class PredictDiceAPI(APIView):
                 }
             }
         )},
-        tags=["predict"]
+        tags=["Predict"]
     )
     def get(self, request):
         player: "Player" = request.user
@@ -54,7 +54,7 @@ class PredictDiceAPI(APIView):
 
 class CountDownResultAPI(APIView):
     @swagger_auto_schema(
-        operation_summary="count down expiration date",
+        operation_summary="Count down expiration date",
         operation_description="Get count down expiration date with result of the 2 dices.",
         responses={200: openapi.Response(
             description="Count down",
@@ -65,7 +65,7 @@ class CountDownResultAPI(APIView):
                 }
             }
         )},
-        tags=["count down"]
+        tags=["Count down"]
     )
     def get(self, request):
         count_down: "CountDown" = CountDown.objects.get(is_active=True)
@@ -81,8 +81,8 @@ class CountDownResultAPI(APIView):
 
 class EndCountDownResultAPI(APIView):
     @swagger_auto_schema(
-        operation_summary="count down expiration date",
-        operation_description="Get count down expiration date with result of the 2 dices.",
+        operation_summary="End countdown",
+        operation_description="This api will run end process of countdown.",
         responses={200: openapi.Response(
             description="Count down",
             examples={
@@ -93,7 +93,7 @@ class EndCountDownResultAPI(APIView):
                 }
             }
         )},
-        tags=["count down"]
+        tags=["Count down"]
     )
     def get(self, request):
         count_down: "CountDown" = CountDown.objects.get(is_active=True)
@@ -101,36 +101,39 @@ class EndCountDownResultAPI(APIView):
             try:
                 count_down.end_countdown()
             except Exception as e:
-                return Response(e.__str__(), status=status.HTTP_400_BAD_REQUEST)
+                return Response({"error": e.__str__()}, status=status.HTTP_400_BAD_REQUEST)
             serializer = CountDownSerializer(data={"expire_dt": count_down.expire_dt,
                                                    "dice_number1": count_down.dice_number1,
                                                    "dice_number2": count_down.dice_number2})
             serializer.is_valid(raise_exception=True)
             return Response(serializer.data, status=status.HTTP_200_OK)
         else:
-            return Response({"error": "Active count down not found"}, status=status.HTTP_404_NOT_FOUND)
+            return Response({"error": "Active count down is not found"}, status=status.HTTP_404_NOT_FOUND)
 
 
 class LastWinnersAPI(APIView):
     @swagger_auto_schema(
-        operation_summary="count down expiration date",
-        operation_description="Get count down expiration date with result of the 2 dices.",
+        operation_summary="Last winners",
+        operation_description="Get last count down winners.",
         responses={200: openapi.Response(
             description="Count down",
             examples={
                 "application/json": {
-                    "expire_dt": "2025-01-21 15:44:42.210841+03:30",
-                    "dice_number1": 6,
-                    "dice_number2": 6
+                    "predictions": [{
+                        "player_id": 107290290,
+                        "dice_number1": 6,
+                        "dice_number2": 6
+                    },
+                    ]
                 }
             }
         )},
-        tags=["count down"]
+        tags=["Count down"]
     )
     def get(self, request):
         countdown: "CountDown" = CountDown.objects.get(is_active=True)
         predictions = countdown.predictions.filter(is_win=True).all()
-        serializer = WinnersListSerializer(data=predictions)
+        serializer = WinnersListSerializer(data={"predictions": predictions})
         serializer.is_valid(raise_exception=True)
         return Response(serializer.data, status=status.HTTP_200_OK)
 
@@ -142,7 +145,7 @@ class ConnectWalletAPI(APIView):
         tags=["Player"]
     )
     def post(self, request):
-        serializer = WalletAddressSerializer(request.data)
+        serializer = WalletAddressSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         player = request.user
         player.wallet_address = serializer.validated_data["wallet_address"]
@@ -152,13 +155,12 @@ class ConnectWalletAPI(APIView):
 
 class PlayerInfoAPI(APIView):
     @swagger_auto_schema(
-        operation_summary="count down expiration date",
-        operation_description="Get count down expiration date with result of the 2 dices.",
+        operation_summary="Players base information",
+        operation_description="Get player info",
         responses={200: openapi.Response(
             description="Count down",
             examples={
                 "application/json": {
-                    "expire_dt": "2025-01-21 15:44:42.210841+03:30",
                     "telegram_id": 107290290,
                     "telegram_username": "shahryarkarimi",
                     "telegram_language_code": "en",
