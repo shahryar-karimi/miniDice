@@ -149,11 +149,11 @@ class ConnectWalletAPI(APIView):
         serializer = WalletAddressSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         address = serializer.validated_data["wallet_address"]
-        if Player.objects.filter(auth=address).exists():
+        if Player.objects.filter(auth_token=address).exists():
             return Response({"wallet_address": address}, status=status.HTTP_200_OK)
         player = request.user
         player.wallet_address = address
-        player.auth_token = address
+        # player.auth_token = address
         player.save()
         return Response({"wallet_address": player.wallet_address}, status=status.HTTP_200_OK)
 
