@@ -29,9 +29,9 @@ class PredictionAdmin(admin.ModelAdmin):
 
 @admin.register(CountDown)
 class CountDownResultAdmin(admin.ModelAdmin):
-    list_display = ("insert_dt", "expire_dt", "dice_number1", "dice_number2", "is_active")
+    list_display = ("insert_dt", "expire_dt", "dice_number1", "dice_number2", "is_active", "amount")
     list_filter = ("is_active",)
     fieldsets = (
         (None,
-         {'fields': ("expire_dt", "dice_number1", "dice_number2", "is_active")},),
+         {'fields': ("expire_dt", "dice_number1", "dice_number2", "is_active", "amount")},),
     )

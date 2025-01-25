@@ -1,3 +1,4 @@
+from django.contrib.auth.models import AnonymousUser
 from drf_yasg import openapi
 from drf_yasg.utils import swagger_auto_schema
 from rest_framework import status
@@ -132,9 +133,8 @@ class LastWinnersAPI(APIView):
     )
     def get(self, request):
         countdown: "CountDown" = CountDown.objects.get(is_active=True)
-        predictions = countdown.predictions.filter(is_win=True).all()
-        serializer = WinnersListSerializer(data={"predictions": predictions})
-        serializer.is_valid(raise_exception=True)
+        predictions = countdown.predictions.filter(is_win=True)
+        serializer = PredictDiceSerializer(predictions, many=True)
         return Response(serializer.data, status=status.HTTP_200_OK)
 
 
@@ -142,6 +142,7 @@ class ConnectWalletAPI(APIView):
     @swagger_auto_schema(
         operation_summary="Connect wallet",
         operation_description="Get wallet address and saves it for player.",
+        request_body=WalletAddressSerializer,
         tags=["Player"]
     )
     def post(self, request):
@@ -150,7 +151,7 @@ class ConnectWalletAPI(APIView):
         player = request.user
         player.wallet_address = serializer.validated_data["wallet_address"]
         player.save()
-        return Response(status=status.HTTP_200_OK)
+        return Response({"wallet_address": player.wallet_address}, status=status.HTTP_200_OK)
 
 
 class PlayerInfoAPI(APIView):

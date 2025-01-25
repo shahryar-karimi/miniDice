@@ -38,6 +38,7 @@ class CountDown(AbstractModel):
     dice_number2 = models.PositiveSmallIntegerField(validators=[MinValueValidator(1), MaxValueValidator(6)],
                                                     null=True,
                                                     blank=True)
+    amount = models.PositiveIntegerField(default=0, null=True, blank=True)
 
     def __str__(self):
         return f"{self.dice_number1} {self.dice_number2}"
