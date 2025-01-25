@@ -6,12 +6,12 @@ from user.models import Player, Prediction, CountDown
 # Register your models here.
 @admin.register(Player)
 class PlayerAdmin(admin.ModelAdmin):
-    list_display = ("telegram_id", "telegram_username", "telegram_language_code", "auth_token", "wallet_address")
+    list_display = ("telegram_id", "telegram_username", "telegram_language_code", "wallet_address")
     search_fields = ("telegram_id", "telegram_username")
     list_filter = ("is_active",)
     fieldsets = (
         (None,
-         {'fields': ("telegram_id", "telegram_username", "telegram_language_code", "auth_token", "wallet_address")},),
+         {'fields': ("telegram_id", "telegram_username", "telegram_language_code", "wallet_address")},),
     )
     ordering = ('telegram_id',)
 

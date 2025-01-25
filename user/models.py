@@ -12,7 +12,6 @@ class Player(AbstractModel):
     first_name = models.CharField(max_length=255, null=True)
     last_name = models.CharField(max_length=255, null=True)
     telegram_language_code = models.CharField(max_length=16, default='en')
-    auth_token = models.CharField(max_length=255, null=True, blank=True)
     wallet_address = models.CharField(max_length=255, null=True, blank=True)
 
     USERNAME_FIELD = 'telegram_id'
@@ -74,7 +73,7 @@ class Prediction(AbstractModel):
 
     def save(self, *args, force_insert=False, force_update=False, using=None, update_fields=None):
         Prediction.objects.filter(is_active=True, player=self.player).update(is_active=False)
-        if self.countdown is None:
+        if self.countdown_id is None:
             self.countdown = CountDown.objects.get(is_active=True)
         super().save(force_insert, force_update, using, update_fields)
 

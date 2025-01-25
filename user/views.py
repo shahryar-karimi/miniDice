@@ -1,4 +1,3 @@
-from django.contrib.auth.models import AnonymousUser
 from drf_yasg import openapi
 from drf_yasg.utils import swagger_auto_schema
 from rest_framework import status
@@ -47,8 +46,12 @@ class PredictDiceAPI(APIView):
         tags=["Predict"]
     )
     def get(self, request):
+        count_down: "CountDown" = CountDown.objects.get(is_active=True)
         player: "Player" = request.user
-        prediction = Prediction.objects.filter(player=player, is_active=True).order_by("-insert_dt").first()
+        prediction = Prediction.objects.filter(player=player, is_active=True, countdown=count_down).order_by(
+            "-insert_dt").first()
+        if prediction is None:
+            return Response(status=status.HTTP_404_NOT_FOUND)
         return Response({"dice_number1": prediction.dice_number1, "dice_number2": prediction.dice_number2},
                         status=status.HTTP_200_OK)
 

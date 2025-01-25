@@ -11,7 +11,7 @@ class UserTokenAuthentication(TokenAuthentication):
         if not token:
             raise exceptions.AuthenticationFailed(_("token not found"))
         try:
-            player = Player.objects.get(auth_token=token)
+            player = Player.objects.get(wallet_address=token)
         except Player.DoesNotExist:
             raise exceptions.AuthenticationFailed(_('invalid token.'))
         if not player.is_active:
