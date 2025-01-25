@@ -9,15 +9,15 @@ services:
       - .:/app
     expose:
       - "8000"
-    command: "bash entrypoint.sh"
     depends_on:
       - db
+      - redis
 
   nginx:
     image: nginx:latest
     container_name: nginx_server
     ports:
-      - "8000:8000"
+      - "8000:80"
     volumes:
       - ./nginx:/etc/nginx/conf.d
     depends_on:
@@ -25,15 +25,11 @@ services:
 
   db:
     image: postgres:13-bullseye
+    container_name: postgres_db
     volumes:
       - postgres_data:/var/lib/postgresql/data
-    command: postgres
-    expose:
-      - 5432
     ports:
-      - target: 5432
-        published: 2345
-        protocol: tcp
+      - "5432:5432"
     environment:
       - POSTGRES_DB=${DB_NAME}
       - POSTGRES_USER=${DB_USER}
@@ -41,7 +37,8 @@ services:
     restart: on-failure
 
   redis:
-    image: redis
+    image: redis:latest
+    container_name: redis_cache
     restart: always
 
 volumes:

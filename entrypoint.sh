@@ -32,12 +32,6 @@ if [ ${COLLECT_STATIC} == 'True' ]; then
     fi
 fi
 
-# shellcheck disable=SC3006
-#if [ -z ${DJANGO_DEBUG+x} ] || (( "$DJANGO_DEBUG" == "true" ))
-#then
-#    nodemon --exec ipython ./telegram_bot_run.py
-#else
-#fi
-python ./telegram_bot_run.py
+exec python telegram_bot_run.py
 
 gunicorn
