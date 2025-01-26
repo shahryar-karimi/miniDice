@@ -26,6 +26,10 @@ class Player(AbstractModel):
         verbose_name = 'Player'
         verbose_name_plural = 'Players'
 
+    def telegram_login(self):
+        self.auth_token = self.telegram_id
+        self.save()
+
     def send_token(self, amount):
         pass
 

@@ -54,4 +54,6 @@ class TelegramAuthView(APIView):
             last_name=telegram_data.get("last_name"),
             telegram_username=telegram_data.get("username"),
         )
-        return Response({"player_id": player.telegram_id, "message": "Player authenticated successfully"})
+        player.telegram_login()
+        return Response({"player_id": player.auth_token, "message": "Player authenticated successfully"},
+                        status=status.HTTP_200_OK)
