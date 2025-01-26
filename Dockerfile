@@ -1,6 +1,6 @@
 FROM python:3.12-slim AS builder
 
-ENV PYTHONUNBUFFERED=1
+#ENV PYTHONUNBUFFERED=1
 WORKDIR /code
 
 # Install system dependencies
@@ -21,7 +21,7 @@ RUN python -m venv /opt/venv && \
 ENV PYTHONUNBUFFERED=1 \
     PATH="/opt/venv/bin:$PATH"
 
-WORKDIR /code
+#WORKDIR /code
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
     libpq-dev \
@@ -33,7 +33,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
  && rm -rf /var/lib/apt/lists/* \
 
 COPY --from=builder /opt/venv /opt/venv
-COPY ./../ /code/
+COPY . .
 
 RUN dos2unix /app/entrypoint.sh && chmod +x /app/entrypoint.sh
 
