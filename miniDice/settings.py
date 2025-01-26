@@ -173,6 +173,7 @@ USE_TZ = True
 
 STATIC_URL = f"{BASE_DIR}/static/"
 
+DJANGO_SUPERUSER_PASSWORD=config("DJANGO_SUPERUSER_PASSWORD")
 CONSTANCE_BACKEND = "constance.backends.database.DatabaseBackend"
 CONSTANCE_DBS = "default"
 CONSTANCE_DATABASE_CACHE_BACKEND = "default"
