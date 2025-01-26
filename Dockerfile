@@ -18,8 +18,8 @@ RUN python -m venv /opt/venv && \
 
 #FROM python:3.12-slim
 
-ENV PYTHONUNBUFFERED=1 \
-    PATH="/opt/venv/bin:$PATH"
+#ENV PYTHONUNBUFFERED=1 \
+#    PATH="/opt/venv/bin:$PATH"
 
 #WORKDIR /code
 
