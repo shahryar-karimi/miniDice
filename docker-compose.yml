@@ -42,10 +42,7 @@ services:
     container_name: redis_cache
     ports:
       - "6379:6379"
-    restart: always
-
-networks:
-  app_network:
+    restart: on-failure
 
 volumes:
   postgres_data:
