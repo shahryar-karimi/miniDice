@@ -52,4 +52,3 @@ volumes:
 
 networks:
   dev_network:
-    external: true
