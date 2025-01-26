@@ -2,6 +2,7 @@ from typing import Optional
 
 from django.contrib.auth.backends import BaseBackend
 from django.contrib.auth.models import User
+from rest_framework import exceptions
 
 from user.models import Player
 
@@ -13,8 +14,12 @@ class TokenAuthenticationBackend(BaseBackend):
 
     def authenticate(self, request, username=None, password=None, token=None, **kwargs):
         try:
-            user = User.objects.get(username=username, password=password)
-            return user
+            user = User.objects.get(username=username)
+            if user:
+                if user.check_password(password):
+                    return user
+                else:
+                    raise exceptions.AuthenticationFailed()
         except User.DoesNotExist:
             pass
         try:
