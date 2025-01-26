@@ -3,35 +3,33 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
-    command: ["./wait_for_db.sh", "db", "gunicorn", "project_name.wsgi:application", "--bind", "0.0.0.0:8000"]
-    networks:
-      - app_network
     container_name: django_app
     volumes:
       - .:/app
+    expose:
+      - "8000"
     depends_on:
       - db
       - redis
-    environment:
-      - DJANGO_SETTINGS_MODULE=miniDice.settings
 
 
   nginx:
     image: nginx:latest
     container_name: nginx_server
     ports:
-      - "80:80"
+      - "8000:80"
     volumes:
       - ./nginx:/etc/nginx/conf.d
     depends_on:
       - web
 
   db:
-    image: postgres:13
+    image: postgres:13-bullseye
+    container_name: postgres_db
     volumes:
-      - postgres_data:/var/lib/postgresql/data/
-    networks:
-      - app_network
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
     environment:
       - POSTGRES_DB=${DB_NAME}
       - POSTGRES_USER=${DB_USER}

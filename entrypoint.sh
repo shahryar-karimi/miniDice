@@ -1,7 +1,5 @@
 #!/bin/bash
-
 set -e
-
 # There are some times database is not ready yet!
 # We'll check if database is ready and we can connect to it
 # then the rest of the code run as well.
@@ -32,6 +30,5 @@ if [ ${COLLECT_STATIC} == 'True' ]; then
     fi
 fi
 
-python telegram_bot_run.py
-
+python ./telegram_bot_run.py
 gunicorn

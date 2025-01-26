@@ -47,6 +47,8 @@ class PredictDiceAPI(APIView):
     )
     def get(self, request):
         count_down: "CountDown" = CountDown.objects.get(is_active=True)
+        if count_down.is_finished:
+            return Response({"dice_number1": None, "dice_number2": None}, status=status.HTTP_200_OK)
         player: "Player" = request.user
         prediction = Prediction.objects.filter(player=player, is_active=True, countdown=count_down).order_by(
             "-insert_dt").first()
