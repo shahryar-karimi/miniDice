@@ -27,7 +27,7 @@ if [ "${MIGRATE}" == 'True' ]; then
     python manage.py migrate --no-input || exit_with_error "Failed to migrate database"
 fi
 echo "Initializing default superuser..."
-python manage.py initadmin --email=$DJANGO_SUPERUSER_EMAIL --full_name="$DJANGO_SUPERUSER_FULL_NAME" --password=$DJANGO_SUPERUSER_PASSWORD
+python manage.py createsuperuser --email=$DJANGO_SUPERUSER_EMAIL --username="$DJANGO_SUPERUSER_FULL_NAME" --password=$DJANGO_SUPERUSER_PASSWORD
 status=$?
 if [ $status -ne 0 ]; then
     echo "Failed to initialize default admin: $status"
