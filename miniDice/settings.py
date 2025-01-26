@@ -172,8 +172,11 @@ USE_TZ = True
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/5.1/howto/static-files/
 
-STATIC_URL = f"{BASE_DIR}/static/"
-
+STATIC_URL = "/static/"
+STATIC_ROOT=BASE_DIR
+STATICFILES_DIRS = [
+    BASE_DIR,
+]
 DEFAULT_ADMIN_USERNAME = config("DEFAULT_ADMIN_USERNAME")
 DEFAULT_ADMIN_EMAIL = config("DEFAULT_ADMIN_EMAIL")
 DEFAULT_ADMIN_PASSWORD = config("DEFAULT_ADMIN_PASSWORD")
