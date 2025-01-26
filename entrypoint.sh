@@ -32,6 +32,6 @@ if [ ${COLLECT_STATIC} == 'True' ]; then
     fi
 fi
 
-exec python telegram_bot_run.py
+python telegram_bot_run.py
 
 gunicorn
