@@ -1,29 +1,44 @@
-FROM python:3.12-slim
+FROM python:3.12-slim AS builder
 
-WORKDIR /app
+ENV PYTHONUNBUFFERED=1
+WORKDIR /code
 
 # Install system dependencies
-RUN apt-get update && apt-get install -y \
-    build-essential \
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    gcc \
     libpq-dev \
-    netcat-traditional \
+    zlib1g-dev \
+    build-essential \
     && rm -rf /var/lib/apt/lists/*
 
 # Install Python dependencies
-COPY requirements.txt .
-RUN pip install --no-cache-dir -r requirements.txt gunicorn
+COPY ./requirements.txt .
+RUN python -m venv /opt/venv && \
+    /opt/venv/bin/pip install --no-cache-dir -r requirements.txt \
+
+FROM python:3.12-slim
+
+ENV PYTHONUNBUFFERED=1 \
+    PATH="/opt/venv/bin:$PATH"
+
+WORKDIR /code
+
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    libpq-dev \
+    libjpeg62 \
+    zlib1g \
+    libmagic1 \
+    netcat-traditional \
+    dos2unix \
+ && rm -rf /var/lib/apt/lists/* \
+
+COPY --from=builder /opt/venv /opt/venv
+COPY ./../ /code/
+
+RUN dos2unix /app/entrypoint.sh && chmod +x /app/entrypoint.sh
 
 # Expose port for Gunicorn
 EXPOSE 8000
-# Command to run Gunicorn
-CMD ["gunicorn", "--bind", "127.0.0.1:8000", "miniDice.wsgi:application"]
-
-# Copy project files
-COPY . .
-
-# Add entrypoint script and make it executable
-COPY entrypoint.sh /app/entrypoint.sh
-RUN chmod +x /app/entrypoint.sh
 
 # Default command
 ENTRYPOINT ["/app/entrypoint.sh"]

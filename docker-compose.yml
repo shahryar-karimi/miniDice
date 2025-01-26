@@ -19,17 +19,6 @@ services:
       - db
       - redis
 
-
-  #  nginx:
-  #    image: nginx:latest
-  #    container_name: nginx_server
-  #    ports:
-  #      - "8000:80"
-  #    volumes:
-  #      - ./nginx:/etc/nginx/conf.d
-  #    depends_on:
-  #      - web
-
   db:
     image: postgres:latest
     container_name: dev-db
