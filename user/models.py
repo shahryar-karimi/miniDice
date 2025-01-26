@@ -1,4 +1,3 @@
-from django.contrib.auth.models import AbstractUser
 from django.core.validators import MinValueValidator, MaxValueValidator
 from django.db import models
 from django.utils import timezone
@@ -59,8 +58,10 @@ class CountDown(AbstractModel):
     def end_countdown(self):
         if self.is_finished:
             predictions_filter = self.predictions.filter(is_active=True)
-            predictions_filter.filter(dice_number1=self.dice_number1, dice_number2=self.dice_number2).update(is_win=True)
-            predictions_filter.filter(dice_number1=self.dice_number2, dice_number2=self.dice_number1).update(is_win=True)
+            predictions_filter.filter(dice_number1=self.dice_number1, dice_number2=self.dice_number2).update(
+                is_win=True)
+            predictions_filter.filter(dice_number1=self.dice_number2, dice_number2=self.dice_number1).update(
+                is_win=True)
         else:
             raise ValueError("Count down time is not finished yet.")
 

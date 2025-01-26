@@ -38,10 +38,10 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     "drf_yasg",
     'user.apps.UserConfig',
-    'telegramBot.apps.TelegrambotConfig',
     'constance',
     "constance.backends.database",
     "rest_framework",
+    'telegramBot.apps.TelegrambotConfig',
 ]
 
 MIDDLEWARE = [
@@ -173,7 +173,10 @@ USE_TZ = True
 
 STATIC_URL = f"{BASE_DIR}/static/"
 
-DJANGO_SUPERUSER_PASSWORD=config("DJANGO_SUPERUSER_PASSWORD")
+DEFAULT_ADMIN_USERNAME = config("DEFAULT_ADMIN_USERNAME")
+DEFAULT_ADMIN_EMAIL = config("DEFAULT_ADMIN_EMAIL")
+DEFAULT_ADMIN_PASSWORD = config("DEFAULT_ADMIN_PASSWORD")
+
 CONSTANCE_BACKEND = "constance.backends.database.DatabaseBackend"
 CONSTANCE_DBS = "default"
 CONSTANCE_DATABASE_CACHE_BACKEND = "default"
