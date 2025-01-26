@@ -30,11 +30,8 @@ services:
       - postgres_data:/var/lib/postgresql/data
     ports:
       - "5432:5432"
-    environment:
-      - POSTGRES_DB=${DB_NAME}
-      - POSTGRES_USER=${DB_USER}
-      - POSTGRES_PASSWORD=${DB_PASS}
-      - PGDATA=/var/lib/postgresql/data/pgdata
+    env_file:
+      - ./.env
     restart: on-failure
 
   redis:
