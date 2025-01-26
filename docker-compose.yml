@@ -1,45 +1,66 @@
 services:
   web:
+    image: mini_dice_image
+    container_name: django_app
     build:
       context: .
       dockerfile: Dockerfile
-    container_name: django_app
     volumes:
       - .:/app
-    expose:
-      - "8000"
+    ports:
+      - "8000:8000"
+    env_file:
+      - ./.env
+    environment:
+      - DJANGO_SETTINGS_MODULE=miniDice.settings
+    networks:
+      - dev_network
     depends_on:
       - db
       - redis
 
 
-#  nginx:
-#    image: nginx:latest
-#    container_name: nginx_server
-#    ports:
-#      - "8000:80"
-#    volumes:
-#      - ./nginx:/etc/nginx/conf.d
-#    depends_on:
-#      - web
+  #  nginx:
+  #    image: nginx:latest
+  #    container_name: nginx_server
+  #    ports:
+  #      - "8000:80"
+  #    volumes:
+  #      - ./nginx:/etc/nginx/conf.d
+  #    depends_on:
+  #      - web
 
   db:
-    image: postgres:13-bullseye
-    container_name: postgres_db
-    volumes:
-      - postgres_data:/var/lib/postgresql/data
+    image: postgres:latest
+    container_name: dev-db
     ports:
-      - "5432:5432"
+      - "5432:5432" # Expose PostgreSQL port
+    volumes:
+      - ../volumes/postgres_dev_data:/var/lib/postgresql/data # Use volumes directory for persistent data
     env_file:
       - ./.env
-    restart: on-failure
+    networks:
+      - dev_network
 
   redis:
     image: redis:latest
-    container_name: redis_cache
+    container_name: dev-redis
     ports:
-      - "6379:6379"
-    restart: on-failure
+      - "6379:6379" # Expose Redis port
+    volumes:
+      - ../volumes/redis_dev_data:/data # Use volumes directory for persistent data
+    env_file:
+      - ./.env
+    networks:
+      - dev_network
 
 volumes:
   postgres_data:
+    driver: local
+
+  redis_dev_data:
+    driver: local
+
+networks:
+  dev_network:
+    external: true

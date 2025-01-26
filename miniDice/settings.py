@@ -22,7 +22,8 @@ config = AutoConfig(search_path=BASE_DIR)
 
 # SECURITY WARNING: keep the secret key used in production secret!
 SECRET_KEY = config('SECRET_KEY', cast=str)
-ALLOWED_HOSTS = [host.strip() for host in config('ALLOWED_HOSTS', default='*').split(',')]
+ALLOWED_HOSTS = ["*"]
+# ALLOWED_HOSTS = [host.strip() for host in config('ALLOWED_HOSTS', default='*').split(',')]
 FRONTEND_URL = config("FRONTEND_URL", cast=str)
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
@@ -107,13 +108,13 @@ TELEGRAM_BOT_TOKEN = config('TELEGRAM_BOT_TOKEN')
 # https://docs.djangoproject.com/en/5.1/ref/settings/#databases
 
 DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.postgresql_psycopg2',
-        'NAME': config("DB_NAME"),
-        'USER': config("DB_USER"),
-        'PASSWORD': config("DB_PASS"),
-        'HOST': config("DB_HOST", default='db'),
-        'PORT': config("DB_PORT", default=5432),
+    "default": {
+        "ENGINE": "django.db.backends.postgresql",
+        "NAME": config("POSTGRES_DB"),
+        "USER": config("POSTGRES_USER"),
+        "PASSWORD": config("POSTGRES_PASSWORD"),
+        "HOST": config("POSTGRES_HOST"),
+        "PORT": config("POSTGRES_PORT", "5432"),
     }
 }
 REDIS_HOST = config("REDIS_HOST", default="localhost")
