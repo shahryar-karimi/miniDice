@@ -14,7 +14,9 @@ from user.models import Player
 
 
 class TelegramAuthView(APIView):
-    permission_classes = (AllowAny,)
+    authentication_classes = []
+    permission_classes = [AllowAny]
+
     @swagger_auto_schema(
         operation_summary="Authenticate for players",
         operation_description="Take telegram data to authenticate players and returns player_id",
