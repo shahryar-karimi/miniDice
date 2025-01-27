@@ -44,13 +44,13 @@ class TelegramAuthView(APIView):
         # if time.time() - auth_date > 86400:
         #     return Response({"error": "Auth date expired"}, status=status.HTTP_401_UNAUTHORIZED)
 
-        secret_key = hashlib.sha256(settings.TELEGRAM_BOT_TOKEN.encode()).digest()
-        check_hash = telegram_data.pop("hash")
-        data_check_string = "\n".join([f"{k}={v}" for k, v in sorted(telegram_data.items())])
-        calculated_hash = hmac.new(secret_key, data_check_string.encode(), hashlib.sha256).hexdigest()
+        # secret_key = hashlib.sha256(settings.TELEGRAM_BOT_TOKEN.encode()).digest()
+        # check_hash = telegram_data.pop("hash")
+        # data_check_string = "\n".join([f"{k}={v}" for k, v in sorted(telegram_data.items())])
+        # calculated_hash = hmac.new(secret_key, data_check_string.encode(), hashlib.sha256).hexdigest()
 
-        if calculated_hash != check_hash:
-            return Response({"error": "Invalid data"}, status=status.HTTP_401_UNAUTHORIZED)
+        # if calculated_hash != check_hash:
+        #     return Response({"error": "Invalid data"}, status=status.HTTP_401_UNAUTHORIZED)
 
         # Get or create user
         player, created = Player.objects.get_or_create(
