@@ -30,6 +30,7 @@ class TelegramAuthView(APIView):
     def post(self, request):
         # Extract Telegram data
         data = request.data
+        print(data)
         telegram_data = data.get("telegram_data")
         if not telegram_data:
             return Response({"error": "Telegram data missing"}, status=status.HTTP_400_BAD_REQUEST)
