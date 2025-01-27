@@ -5,6 +5,7 @@ import time
 from drf_yasg import openapi
 from drf_yasg.utils import swagger_auto_schema
 from rest_framework import status
+from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
@@ -13,6 +14,7 @@ from user.models import Player
 
 
 class TelegramAuthView(APIView):
+    permission_classes = (AllowAny,)
     @swagger_auto_schema(
         operation_summary="Authenticate for players",
         operation_description="Take telegram data to authenticate players and returns player_id",
