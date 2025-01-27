@@ -12,6 +12,10 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     dos2unix \
  && rm -rf /var/lib/apt/lists/*
 
+# Install Python dependencies
+COPY ./requirements.txt .
+RUN pip install --no-cache-dir -r requirements.txt gunicorn
+
 COPY . .
 
 # Ensure entrypoint scripts have Unix-style line endings and are executable
