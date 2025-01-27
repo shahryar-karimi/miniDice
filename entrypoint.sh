@@ -45,5 +45,4 @@ if [ "$DJANGO_ENV" == "prod" ]; then
 else
     echo "Starting Django development server..."
     python manage.py runserver 0.0.0.0:8000
-#    python ./telegram_bot_run.py
 fi

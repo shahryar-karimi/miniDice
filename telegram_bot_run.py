@@ -10,10 +10,14 @@ from telegramBot.routing import add_handlers
 
 
 def main():
+    print("Starting connection with bot")
     bot = Bot(TELEGRAM_BOT_TOKEN)
+    print("Connected successfully!")
     application = ApplicationBuilder().bot(bot).build()
     add_handlers(application)
+    print("Loading application")
     application.run_polling(allowed_updates=Update.ALL_TYPES)
+    print("Application loaded successfully!")
 
 
 if __name__ == '__main__':

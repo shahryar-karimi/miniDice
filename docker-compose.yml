@@ -19,6 +19,23 @@ services:
       - db
       - redis
 
+  telegbot:
+    image: mini_dice_telegram_image
+    container_name: telegram_bot_run
+    build:
+      context: .
+      dockerfile: Dockerfile_telegram
+    volumes:
+      - .:/app
+    env_file:
+      - ./.env
+    networks:
+      - dev_network
+    depends_on:
+      - web
+      - db
+      - redis
+
   db:
     image: postgres:latest
     container_name: dev-db
