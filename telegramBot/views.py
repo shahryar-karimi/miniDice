@@ -34,15 +34,15 @@ class TelegramAuthView(APIView):
     def post(self, request):
         # Extract Telegram data
         data = request.data
-        print(data)
         telegram_data = data.get("telegram_data")
+        print(telegram_data)
         if not telegram_data:
             return Response({"error": "Telegram data missing"}, status=status.HTTP_400_BAD_REQUEST)
 
         # Validate Telegram data
-        auth_date = int(telegram_data.get("auth_date"))
-        if time.time() - auth_date > 86400:
-            return Response({"error": "Auth date expired"}, status=status.HTTP_401_UNAUTHORIZED)
+        # auth_date = int(telegram_data.get("auth_date"))
+        # if time.time() - auth_date > 86400:
+        #     return Response({"error": "Auth date expired"}, status=status.HTTP_401_UNAUTHORIZED)
 
         secret_key = hashlib.sha256(settings.TELEGRAM_BOT_TOKEN.encode()).digest()
         check_hash = telegram_data.pop("hash")
