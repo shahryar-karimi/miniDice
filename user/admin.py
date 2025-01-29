@@ -18,13 +18,26 @@ class PlayerAdmin(admin.ModelAdmin):
 
 @admin.register(Prediction)
 class PredictionAdmin(admin.ModelAdmin):
-    list_display = ("player", "countdown", "dice_number1", "dice_number2", "is_win", "is_active")
+    list_display = ("player", "countdown", "dice_number1", "dice_number2", "is_win", "is_active", "wallet", "amount")
     search_fields = ("dice_number1", "dice_number2")
     list_filter = ("dice_number1", "dice_number2", "is_win", "is_active", "countdown")
     fieldsets = (
         (None,
          {'fields': ("player", "dice_number1", "dice_number2", "countdown")},),
     )
+
+    @admin.display(description='wallet address')
+    def wallet(self, obj: Prediction):
+        if obj.player.wallet_address:
+            return obj.player.wallet_address
+        return None
+
+    @admin.display(description='amount')
+    def amount(self, obj: Prediction):
+        if obj.is_win:
+            countdown = obj.countdown
+            return countdown.amount / countdown.get_won_players_count()
+        return 0
 
 
 @admin.register(CountDown)
