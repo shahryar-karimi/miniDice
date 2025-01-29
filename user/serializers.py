@@ -23,9 +23,6 @@ class WalletAddressSerializer(serializers.ModelSerializer):
         model = Player
         fields = ["wallet_address"]
 
-    def create(self, validated_data):
-        pass
-
 
 class CountDownSerializer(serializers.ModelSerializer):
     class Meta:

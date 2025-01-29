@@ -123,18 +123,18 @@ class LastWinnersAPI(APIView):
             examples={
                 "application/json": {
                     "predictions": [{
-                        "player_id": 107290290,
+                        "username": "hamidmk",
                         "dice_number1": 6,
-                        "dice_number2": 6
-                    },
-                    ]
+                        "dice_number2": 6,
+                        "amount": 100
+                    },]
                 }
             }
         )},
         tags=["Count down"]
     )
     def get(self, request):
-        countdown: "CountDown" = CountDown.objects.get(is_active=True)
+        countdown: "CountDown" = CountDown.objects.filter(expire_dt__lte=timezone.now()).order_by("-expire_dt").first()
         predictions = countdown.predictions.filter(is_win=True)
         serializer = PredictDiceSerializer(predictions, many=True)
         return Response(serializer.data, status=status.HTTP_200_OK)
@@ -155,7 +155,6 @@ class ConnectWalletAPI(APIView):
             return Response({"wallet_address": address}, status=status.HTTP_200_OK)
         player = request.user
         player.wallet_address = address
-        # player.auth_token = address
         player.save()
         return Response({"wallet_address": player.wallet_address}, status=status.HTTP_200_OK)
 
