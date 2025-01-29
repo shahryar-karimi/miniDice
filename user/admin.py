@@ -41,8 +41,8 @@ class PredictionAdmin(admin.ModelAdmin):
 
 
 @admin.register(CountDown)
-class CountDownResultAdmin(admin.ModelAdmin):
-    list_display = ("insert_dt", "expire_dt", "dice_number1", "dice_number2", "is_active", "amount")
+class CountDownAdmin(admin.ModelAdmin):
+    list_display = ("insert_dt", "expire_dt", "dice_number1", "dice_number2", "is_active", "amount", "won_players")
     list_filter = ("is_active",)
     fieldsets = (
         (None,
@@ -58,3 +58,9 @@ class CountDownResultAdmin(admin.ModelAdmin):
                 countdown.save()
             except Exception as e:
                 pass
+
+    @admin.display(description='Won players count')
+    def won_players(self, obj: CountDown):
+        if obj.is_finished:
+            return obj.get_won_players_count()
+        return 0
