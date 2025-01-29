@@ -3,6 +3,7 @@ from drf_yasg.utils import swagger_auto_schema
 from rest_framework import status
 from rest_framework.response import Response
 from rest_framework.views import APIView
+from django.utils import timezone
 
 from user.serializers import *
 
@@ -150,9 +151,10 @@ class ConnectWalletAPI(APIView):
     def post(self, request):
         serializer = WalletAddressSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
-        address = serializer.validated_data["wallet_address"]
-        if Player.objects.filter(auth_token=address).exists():
-            return Response({"wallet_address": address}, status=status.HTTP_200_OK)
+        try:
+            address = serializer.validated_data["wallet_address"]
+        except Exception as e:
+            return Response({"error": "Invalid data input"}, status=status.HTTP_400_BAD_REQUEST)
         player = request.user
         player.wallet_address = address
         player.save()
