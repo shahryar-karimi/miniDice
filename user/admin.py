@@ -35,3 +35,13 @@ class CountDownResultAdmin(admin.ModelAdmin):
         (None,
          {'fields': ("expire_dt", "dice_number1", "dice_number2", "is_active", "amount")},),
     )
+    actions = ["end_countdown"]
+
+    def end_countdown(self, request, queryset):
+        countdowns = queryset.all()
+        for countdown in countdowns:
+            try:
+                countdown.end_countdown()
+                countdown.save()
+            except Exception as e:
+                pass
