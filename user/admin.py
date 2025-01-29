@@ -18,8 +18,8 @@ class PlayerAdmin(admin.ModelAdmin):
 
 @admin.register(Prediction)
 class PredictionAdmin(admin.ModelAdmin):
-    list_display = ("player", "countdown", "dice_number1", "dice_number2", "is_win", "is_active", "wallet", "amount")
-    search_fields = ("dice_number1", "dice_number2")
+    list_display = ("player", "insert_dt", "countdown", "dice_number1", "dice_number2", "is_win", "is_active", "wallet", "amount")
+    search_fields = ("player__telegram_username", "player__telegram_id")
     list_filter = ("dice_number1", "dice_number2", "is_win", "is_active", "countdown")
     fieldsets = (
         (None,

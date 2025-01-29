@@ -44,7 +44,7 @@ class CountDown(AbstractModel):
     amount = models.PositiveIntegerField(default=0, null=True, blank=True)
 
     def __str__(self):
-        return f"{self.dice_number1} {self.dice_number2}"
+        return f"({self.dice_number1} {self.dice_number2}) {self.expire_dt}"
 
     class Meta:
         db_table = 'countdown_result'
