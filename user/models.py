@@ -56,8 +56,9 @@ class CountDown(AbstractModel):
         return self.expire_dt <= timezone.now()
 
     def end_countdown(self):
+        predictions_filter = self.predictions.filter(is_active=True)
+        predictions_filter.update(is_win=False)
         if self.is_finished:
-            predictions_filter = self.predictions.filter(is_active=True)
             predictions_filter.filter(dice_number1=self.dice_number1, dice_number2=self.dice_number2).update(
                 is_win=True)
             predictions_filter.filter(dice_number1=self.dice_number2, dice_number2=self.dice_number1).update(
@@ -66,7 +67,8 @@ class CountDown(AbstractModel):
             raise ValueError("Count down time is not finished yet.")
 
     def save(self, *args, force_insert=False, force_update=False, using=None, update_fields=None):
-        CountDown.objects.filter(is_active=True).update(is_active=False)
+        if self.id is None:
+            CountDown.objects.filter(is_active=True).update(is_active=False)
         super().save(force_insert, force_update, using, update_fields)
 
     def get_won_players_count(self):
@@ -81,9 +83,11 @@ class Prediction(AbstractModel):
     countdown = models.ForeignKey(CountDown, on_delete=models.CASCADE, related_name='predictions')
 
     def save(self, *args, force_insert=False, force_update=False, using=None, update_fields=None):
-        Prediction.objects.filter(is_active=True, player=self.player).update(is_active=False)
         if self.countdown_id is None:
             self.countdown = CountDown.objects.get(is_active=True)
+        if not self.countdown.is_finished:
+            Prediction.objects.filter(is_active=True, player=self.player, countdown=self.countdown).update(
+                is_active=False)
         super().save(force_insert, force_update, using, update_fields)
 
     class Meta:
