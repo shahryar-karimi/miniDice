@@ -15,7 +15,7 @@ from .utils import handler_decor
 async def start(bot: telegram.Bot, update: Update, user: Player):
     buttons = [
         [InlineKeyboardButton(
-            text='Open Dice Predictor',
+            text='🎲 Predict Now 🎲',
             web_app=WebAppInfo(url=settings.FRONTEND_URL)
         )]
     ]
@@ -27,7 +27,7 @@ Join the thrill and win your share of $100 every day with our daily airdrop! �
 
 How to Participate:
 
-1- Start the Bot 🤖
+1- Click on “🎲predict” to open mini app🤖
 2- Connect Your Wallet 🔗
 3- Join the Dice Maniacs Channel 📢
 4- Guess the Correct Dice Combo 🎯
