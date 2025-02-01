@@ -42,7 +42,7 @@ class PredictionAdmin(admin.ModelAdmin):
 
 @admin.register(CountDown)
 class CountDownAdmin(admin.ModelAdmin):
-    list_display = ("insert_dt", "expire_dt", "dice_number1", "dice_number2", "is_active", "amount", "won_players")
+    list_display = ("insert_dt", "expire_dt", "dice_number1", "dice_number2", "is_active", "amount", "won_players", "is_finished")
     list_filter = ("is_active",)
     fieldsets = (
         (None,
