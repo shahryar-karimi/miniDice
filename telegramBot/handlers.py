@@ -31,7 +31,8 @@ How to Participate:
 2- Connect Your Wallet 🔗
 3- Join the Dice Maniacs Channel 📢
 4- Guess the Correct Dice Combo 🎯
-5- Check the Combo at the Scheduled Time ⏰
+5- Check the @dicemaniacs channel at the Scheduled Time ⏰
+
 ✅ Guess correctly to claim your share of the $100 daily prize!
 
 For more information, type /help.
