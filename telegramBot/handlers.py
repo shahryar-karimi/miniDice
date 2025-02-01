@@ -21,8 +21,22 @@ async def start(bot: telegram.Bot, update: Update, user: Player):
     ]
 
     msg = (
-        "Hi this is a magic world for predicting two dices and earning money.\n"
-        "Press the button below to guess the correct dices!"
+"""🎲 Welcome to Dice Maniacs! 🎲
+
+Join the thrill and win your share of $100 every day with our daily airdrop! 💸
+
+How to Participate:
+
+1- Start the Bot 🤖
+2- Connect Your Wallet 🔗
+3- Join the Dice Maniacs Channel 📢
+4- Guess the Correct Dice Combo 🎯
+5- Check the Combo at the Scheduled Time ⏰
+✅ Guess correctly to claim your share of the $100 daily prize!
+
+For more information, type /help.
+
+Let the dice roll in your favor! 🎲💰"""
     )
     return await bot.send_message(
         chat_id=user.telegram_id,
