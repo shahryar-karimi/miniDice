@@ -54,7 +54,7 @@ class PredictDiceAPI(APIView):
         prediction = Prediction.objects.filter(player=player, is_active=True, countdown=count_down).order_by(
             "-insert_dt").first()
         if prediction is None:
-            return Response(status=status.HTTP_404_NOT_FOUND)
+            return Response({"dice_number1": None, "dice_number2": None}, status=status.HTTP_200_OK)
         return Response({"dice_number1": prediction.dice_number1, "dice_number2": prediction.dice_number2},
                         status=status.HTTP_200_OK)
 
@@ -128,7 +128,7 @@ class LastWinnersAPI(APIView):
                         "dice_number1": 6,
                         "dice_number2": 6,
                         "amount": 100
-                    },]
+                    }, ]
                 }
             }
         )},
