@@ -25,12 +25,15 @@ class NullExistFilter(admin.SimpleListFilter):
 
 @admin.register(Player)
 class PlayerAdmin(admin.ModelAdmin):
-    list_display = ("telegram_id", "telegram_username", "first_name", "last_name", "telegram_language_code", "auth_token", "wallet_address", "wallet_insert_dt")
+    list_display = (
+        "telegram_id", "telegram_username", "first_name", "last_name", "telegram_language_code", "auth_token",
+        "wallet_address", "wallet_insert_dt")
     search_fields = ("telegram_id", "telegram_username")
     list_filter = ("is_active", NullExistFilter)
     fieldsets = (
         (None,
-         {'fields': ("telegram_id", "telegram_username", "telegram_language_code", "auth_token", "wallet_address")},),
+         {'fields': ("telegram_id", "telegram_username", "telegram_language_code", "auth_token", "wallet_address",
+                     "wallet_insert_dt")},),
     )
     ordering = ('telegram_id',)
 
