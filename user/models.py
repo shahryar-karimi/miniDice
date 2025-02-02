@@ -7,9 +7,9 @@ from django_autoutils.model_utils import AbstractModel
 
 class Player(AbstractModel):
     telegram_id = models.BigIntegerField(unique=True, primary_key=True)
-    telegram_username = models.CharField(max_length=255, null=True)
-    first_name = models.CharField(max_length=255, null=True)
-    last_name = models.CharField(max_length=255, null=True)
+    telegram_username = models.CharField(max_length=255, null=True, blank=True)
+    first_name = models.CharField(max_length=255, null=True, blank=True)
+    last_name = models.CharField(max_length=255, null=True, blank=True)
     telegram_language_code = models.CharField(max_length=16, default='en')
     auth_token = models.CharField(max_length=255, null=True, blank=True)
     wallet_address = models.CharField(max_length=255, null=True, blank=True)
