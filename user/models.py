@@ -13,6 +13,7 @@ class Player(AbstractModel):
     telegram_language_code = models.CharField(max_length=16, default='en')
     auth_token = models.CharField(max_length=255, null=True, blank=True)
     wallet_address = models.CharField(max_length=255, null=True, blank=True)
+    wallet_insert_dt = models.DateTimeField(blank=True, null=True)
 
     USERNAME_FIELD = 'telegram_id'
     USERNAME_FIELDS = ['telegram_id', 'telegram_username']

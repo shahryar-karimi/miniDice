@@ -157,6 +157,8 @@ class ConnectWalletAPI(APIView):
             return Response({"error": "Invalid data input"}, status=status.HTTP_400_BAD_REQUEST)
         player = request.user
         player.wallet_address = address
+        if not player.wallet_insert_dt:
+            player.wallet_insert_dt = timezone.now()
         player.save()
         return Response({"wallet_address": player.wallet_address}, status=status.HTTP_200_OK)
 
