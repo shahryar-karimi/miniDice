@@ -53,12 +53,25 @@ class TelegramAuthView(APIView):
         #     return Response({"error": "Invalid data"}, status=status.HTTP_401_UNAUTHORIZED)
 
         # Get or create user
-        player, created = Player.objects.get_or_create(
-            telegram_id=telegram_data.get("id"),
-            first_name=telegram_data.get("first_name"),
-            last_name=telegram_data.get("last_name"),
-            telegram_username=telegram_data.get("username"),
-        )
+        player, created = Player.objects.get_or_create(telegram_id=telegram_data.get("id"))
+
+        # Update the fields if they are provided in telegram_data
+        updated_fields = []
+        if telegram_data.get("first_name"):
+            player.first_name = telegram_data.get("first_name")
+            updated_fields.append("first_name")
+
+        if telegram_data.get("last_name"):
+            player.last_name = telegram_data.get("last_name")
+            updated_fields.append("last_name")
+
+        if telegram_data.get("username"):
+            player.telegram_username = telegram_data.get("username")
+            updated_fields.append("telegram_username")
+
+        # Save only if there are changes
+        if updated_fields:
+            player.save(update_fields=updated_fields)
         player.telegram_login()
         return Response({"player_id": player.auth_token, "message": "Player authenticated successfully"},
                         status=status.HTTP_200_OK)
