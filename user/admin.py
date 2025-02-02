@@ -4,8 +4,7 @@ from django.utils.translation import gettext_lazy as _
 from user.models import Player, Prediction, CountDown
 
 
-# Register your models here.
-class NullExistFilter(admin.SimpleListFilter):
+class ConnectWalletFilter(admin.SimpleListFilter):
     title = _('wallet connected')  # Display name in the filter section
     parameter_name = 'wallet_address'  # URL query parameter
 
@@ -22,6 +21,23 @@ class NullExistFilter(admin.SimpleListFilter):
             return queryset.filter(wallet_address__isnull=False)
         return queryset  # Default: show all
 
+class OpenWebAppFilter(admin.SimpleListFilter):
+    title = _('web app opened')  # Display name in the filter section
+    parameter_name = 'auth_token'  # URL query parameter
+
+    def lookups(self, request, model_admin):
+        return [
+            ('none', _('Not Opened')),
+            ('exist', _('Opened Web App'))
+        ]
+
+    def queryset(self, request, queryset):
+        if self.value() == 'none':
+            return queryset.filter(auth_token__isnull=True)
+        if self.value() == 'exist':
+            return queryset.filter(auth_token__isnull=False)
+        return queryset  # Default: show all
+
 
 @admin.register(Player)
 class PlayerAdmin(admin.ModelAdmin):
@@ -29,7 +45,7 @@ class PlayerAdmin(admin.ModelAdmin):
         "telegram_id", "telegram_username", "first_name", "last_name", "telegram_language_code", "auth_token",
         "wallet_address", "wallet_insert_dt")
     search_fields = ("telegram_id", "telegram_username")
-    list_filter = ("is_active", NullExistFilter)
+    list_filter = ("is_active", ConnectWalletFilter, OpenWebAppFilter)
     fieldsets = (
         (None,
          {'fields': ("telegram_id", "telegram_username", "telegram_language_code", "auth_token", "wallet_address",
