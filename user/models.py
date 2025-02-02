@@ -21,7 +21,7 @@ class Player(AbstractModel):
         if self.telegram_username:
             return self.telegram_username
         else:
-            return self.telegram_id
+            return str(self.telegram_id)
 
     class Meta:
         db_table = 'player'
