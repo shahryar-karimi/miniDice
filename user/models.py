@@ -18,7 +18,10 @@ class Player(AbstractModel):
     USERNAME_FIELDS = ['telegram_id', 'telegram_username']
 
     def __str__(self):
-        return self.telegram_username
+        if self.telegram_username:
+            return self.telegram_username
+        else:
+            return self.telegram_id
 
     class Meta:
         db_table = 'player'
