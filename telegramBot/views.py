@@ -55,10 +55,10 @@ class TelegramAuthView(APIView):
         # Get or create user
         player, created = Player.objects.get_or_create(
             telegram_id=telegram_data.get("id"),
+            first_name=telegram_data.get("first_name"),
+            last_name=telegram_data.get("last_name"),
+            telegram_username=telegram_data.get("username"),
         )
-        player.first_name = telegram_data.get("first_name")
-        player.last_name = telegram_data.get("last_name")
-        player.telegram_username = telegram_data.get("telegram_username")
         player.telegram_login()
         return Response({"player_id": player.auth_token, "message": "Player authenticated successfully"},
                         status=status.HTTP_200_OK)
