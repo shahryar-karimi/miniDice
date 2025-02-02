@@ -15,7 +15,11 @@ class PredictDiceSerializer(serializers.ModelSerializer):
         return obj.player.telegram_username
 
     def get_amount(self, obj: Prediction):
-        return obj.countdown.amount
+        won_count = obj.countdown.get_won_players_count()
+        if won_count == 0:
+            return 0
+        else:
+            return round(obj.countdown.amount / won_count, 3)
 
 
 class WalletAddressSerializer(serializers.ModelSerializer):

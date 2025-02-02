@@ -29,9 +29,6 @@ class Player(AbstractModel):
         self.auth_token = self.telegram_id
         self.save()
 
-    def send_token(self, amount):
-        pass
-
 
 class CountDown(AbstractModel):
     expire_dt = models.DateTimeField()
