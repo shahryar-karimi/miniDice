@@ -25,10 +25,13 @@ class PredictDiceAPI(APIView):
         tags=["Predict"]
     )
     def post(self, request):
-        user = request.user
+        countdown = CountDown.objects.get(is_active=True)
+        if countdown.is_finished:
+            return Response(status=status.HTTP_403_FORBIDDEN)
+        player = request.user
         predicted_dices = PredictDiceSerializer(data=request.data)
         predicted_dices.is_valid(raise_exception=True)
-        predicted_dices.validated_data["player"] = user
+        predicted_dices.validated_data["player"] = player
         predicted_dices.save()
         return Response(predicted_dices.data, status=status.HTTP_200_OK)
 
