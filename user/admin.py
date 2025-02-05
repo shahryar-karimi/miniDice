@@ -42,7 +42,7 @@ class OpenWebAppFilter(admin.SimpleListFilter):
 @admin.register(Player)
 class PlayerAdmin(admin.ModelAdmin):
     list_display = (
-        "telegram_id", "telegram_username", "first_name", "last_name", "telegram_language_code", "auth_token",
+        "telegram_id", "insert_dt", "telegram_username", "first_name", "last_name", "telegram_language_code", "auth_token",
         "wallet_address", "wallet_insert_dt")
     search_fields = ("telegram_id", "telegram_username")
     list_filter = ("is_active", ConnectWalletFilter, OpenWebAppFilter)
