@@ -9,10 +9,10 @@ class PredictDiceSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Prediction
-        fields = ["username", "dice_number1", "dice_number2", "amount"]
+        fields = ["username", "dice_number1", "dice_number2", "amount", "slot"]
 
     def get_username(self, obj: Prediction):
-        return obj.player.telegram_username
+        return obj.player.__str__()
 
     def get_amount(self, obj: Prediction):
         won_count = obj.countdown.get_won_players_count()
@@ -20,6 +20,17 @@ class PredictDiceSerializer(serializers.ModelSerializer):
             return 0
         else:
             return round(obj.countdown.amount / won_count, 3)
+
+
+class PredictSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Prediction
+        fields = ["slot", "dice_number1", "dice_number2"]
+
+
+class PredictBoxSerializer(serializers.Serializer):
+    predictions = PredictSerializer(many=True)
+    slots = serializers.IntegerField()
 
 
 class WalletAddressSerializer(serializers.ModelSerializer):

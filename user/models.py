@@ -18,6 +18,7 @@ class Player(AbstractModel):
     wallet_address = models.CharField(max_length=255, null=True, blank=True)
     wallet_insert_dt = models.DateTimeField(blank=True, null=True)
     referral_code = models.CharField(max_length=255, unique=True, null=True, blank=True)
+    predict_slot = models.PositiveSmallIntegerField(validators=[MinValueValidator(1), MaxValueValidator(21)], default=1)
 
     USERNAME_FIELD = 'telegram_id'
     USERNAME_FIELDS = ['telegram_id', 'telegram_username']
@@ -37,8 +38,8 @@ class Player(AbstractModel):
         self.auth_token = self.telegram_id
         self.save()
 
-    def add_predict_chance(self):
-        print(f"{self.__str__()} referred someone!")
+    def add_predict_slot(self):
+        self.predict_slot += 1
 
     def set_referral_code(self):
         if not self.referral_code:
@@ -83,6 +84,7 @@ class CountDown(AbstractModel):
                 is_win=True)
             predictions_filter.filter(dice_number1=self.dice_number2, dice_number2=self.dice_number1).update(
                 is_win=True)
+            Player.objects.all().update(predict_slot=1)
         else:
             raise ValueError("Count down time is not finished yet.")
 
@@ -92,22 +94,22 @@ class CountDown(AbstractModel):
         super().save(force_insert, force_update, using, update_fields)
 
     def get_won_players_count(self):
-        return self.predictions.filter(is_win=True).count()
+        return self.predictions.filter(is_win=True).distinct("player").count()
 
 
 class Prediction(AbstractModel):
-    player = models.ForeignKey(Player, on_delete=models.CASCADE)
+    player = models.ForeignKey(Player, on_delete=models.CASCADE, related_name='predictions')
     dice_number1 = models.PositiveSmallIntegerField(validators=[MinValueValidator(1), MaxValueValidator(6)])
     dice_number2 = models.PositiveSmallIntegerField(validators=[MinValueValidator(1), MaxValueValidator(6)])
     is_win = models.BooleanField(default=False)
     countdown = models.ForeignKey(CountDown, on_delete=models.CASCADE, related_name='predictions')
+    slot = models.PositiveSmallIntegerField(validators=[MinValueValidator(1), MaxValueValidator(21)], default=1)
 
     def save(self, *args, force_insert=False, force_update=False, using=None, update_fields=None):
         if self.countdown_id is None:
             self.countdown = CountDown.objects.get(is_active=True)
-        if not self.countdown.is_finished:
-            Prediction.objects.filter(is_active=True, player=self.player, countdown=self.countdown).update(
-                is_active=False)
+        Prediction.objects.filter(is_active=True, player=self.player, countdown=self.countdown, slot=self.slot).update(
+            is_active=False)
         super().save(force_insert, force_update, using, update_fields)
 
     class Meta:

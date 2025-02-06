@@ -44,16 +44,14 @@ class OpenWebAppFilter(admin.SimpleListFilter):
 class PlayerAdmin(admin.ModelAdmin):
     list_display = (
         "telegram_id", "insert_dt", "telegram_username", "first_name", "last_name", "telegram_language_code",
-        "auth_token", "referral_code",
-        "wallet_address", "wallet_insert_dt")
+        "auth_token", "referral_code", "predict_slot", "wallet_address", "wallet_insert_dt")
     search_fields = ("telegram_id", "telegram_username")
     list_filter = ("is_active", ConnectWalletFilter, OpenWebAppFilter)
     fieldsets = (
         (None,
          {'fields': (
              "telegram_id", "referral_code", "telegram_username", "telegram_language_code", "auth_token",
-             "wallet_address",
-             "wallet_insert_dt")},),
+             "wallet_address", "predict_slot", "wallet_insert_dt")},),
     )
     ordering = ('telegram_id',)
 
@@ -61,12 +59,13 @@ class PlayerAdmin(admin.ModelAdmin):
 @admin.register(Prediction)
 class PredictionAdmin(admin.ModelAdmin):
     list_display = (
-        "player", "insert_dt", "countdown", "dice_number1", "dice_number2", "is_win", "is_active", "wallet", "amount")
+        "player", "insert_dt", "countdown", "dice_number1", "dice_number2", "slot", "is_win", "is_active", "wallet",
+        "amount")
     search_fields = ("player__telegram_username", "player__telegram_id")
-    list_filter = ("dice_number1", "dice_number2", "is_win", "is_active", "countdown")
+    list_filter = ("dice_number1", "dice_number2", "slot", "is_win", "is_active", "countdown")
     fieldsets = (
         (None,
-         {'fields': ("player", "dice_number1", "dice_number2", "countdown")},),
+         {'fields': ("player", "dice_number1", "dice_number2", "countdown", "slot")},),
     )
 
     @admin.display(description='wallet address')

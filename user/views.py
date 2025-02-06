@@ -27,11 +27,19 @@ class PredictDiceAPI(APIView):
     def post(self, request):
         countdown = CountDown.objects.get(is_active=True)
         if countdown.is_finished:
-            return Response(status=status.HTTP_403_FORBIDDEN)
-        player = request.user
+            return Response({"error": "Countdown is finished. wait for new event."}, status=status.HTTP_403_FORBIDDEN)
+        player: Player = request.user
         predicted_dices = PredictDiceSerializer(data=request.data)
         predicted_dices.is_valid(raise_exception=True)
         predicted_dices.validated_data["player"] = player
+        dice_number1 = predicted_dices.validated_data["dice_number1"]
+        dice_number2 = predicted_dices.validated_data["dice_number2"]
+        predictions = player.predictions.filter(countdown=countdown, is_active=True)
+        for predict in predictions:
+            if predict.dice_number1 == dice_number1 and predict.dice_number2 == dice_number2:
+                return Response({"error": "You've predict this dice before"}, status=status.HTTP_400_BAD_REQUEST)
+            if predict.dice_number1 == dice_number2 and predict.dice_number2 == dice_number1:
+                return Response({"error: You've predict this dice before"}, status=status.HTTP_400_BAD_REQUEST)
         predicted_dices.save()
         return Response(predicted_dices.data, status=status.HTTP_200_OK)
 
@@ -42,8 +50,19 @@ class PredictDiceAPI(APIView):
             description="Result of last predicted dice",
             examples={
                 "application/json": {
-                    "dice_number1": 3,
-                    "dice_number2": 5
+                    "predictions": [
+                        {
+                            "slot": 1,
+                            "dice_number1": 3,
+                            "dice_number2": 5
+                        },
+                        {
+                            "slot": 1,
+                            "dice_number1": 3,
+                            "dice_number2": 5
+                        },
+                    ],
+                    "slots": 2
                 }
             }
         )},
@@ -52,14 +71,13 @@ class PredictDiceAPI(APIView):
     def get(self, request):
         count_down: "CountDown" = CountDown.objects.get(is_active=True)
         if count_down.is_finished:
-            return Response({"dice_number1": None, "dice_number2": None}, status=status.HTTP_200_OK)
+            return Response([{"slot": None, "dice_number1": None, "dice_number2": None}], status=status.HTTP_200_OK)
         player: "Player" = request.user
-        prediction = Prediction.objects.filter(player=player, is_active=True, countdown=count_down).order_by(
-            "-insert_dt").first()
-        if prediction is None:
-            return Response({"dice_number1": None, "dice_number2": None}, status=status.HTTP_200_OK)
-        return Response({"dice_number1": prediction.dice_number1, "dice_number2": prediction.dice_number2},
-                        status=status.HTTP_200_OK)
+        prediction = player.predictions.filter(is_active=True, countdown=count_down)
+        if not prediction.exists():
+            return Response([{"slot": None, "dice_number1": None, "dice_number2": None}], status=status.HTTP_200_OK)
+        serializer = PredictBoxSerializer({"predictions": prediction, "slots": player.predict_slot})
+        return Response(serializer.data, status=status.HTTP_200_OK)
 
 
 class CountDownResultAPI(APIView):
@@ -139,7 +157,7 @@ class LastWinnersAPI(APIView):
     )
     def get(self, request):
         countdown: "CountDown" = CountDown.objects.filter(expire_dt__lte=timezone.now()).order_by("-expire_dt").first()
-        predictions = countdown.predictions.filter(is_win=True)
+        predictions = countdown.predictions.filter(is_win=True).distinct("player")
         serializer = PredictDiceSerializer(predictions, many=True)
         return Response(serializer.data, status=status.HTTP_200_OK)
 
