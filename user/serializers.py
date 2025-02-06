@@ -21,6 +21,19 @@ class PredictDiceSerializer(serializers.ModelSerializer):
         else:
             return round(obj.countdown.amount / won_count, 3)
 
+    def is_valid_predict(self, player, countdown):
+        dice_number1 = self.validated_data["dice_number1"]
+        dice_number2 = self.validated_data["dice_number2"]
+        slot = self.validated_data["slot"]
+        if slot > player.predict_slot:
+            raise ValueError(f"You don't have slot number {slot}")
+        predictions = player.predictions.filter(countdown=countdown, is_active=True)
+        for predict in predictions:
+            if predict.dice_number1 == dice_number1 and predict.dice_number2 == dice_number2:
+                raise ValueError("You've predict this dice before")
+            if predict.dice_number1 == dice_number2 and predict.dice_number2 == dice_number1:
+                raise ValueError("You've predict this dice before")
+
 
 class PredictSerializer(serializers.ModelSerializer):
     class Meta:

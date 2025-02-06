@@ -32,14 +32,10 @@ class PredictDiceAPI(APIView):
         predicted_dices = PredictDiceSerializer(data=request.data)
         predicted_dices.is_valid(raise_exception=True)
         predicted_dices.validated_data["player"] = player
-        dice_number1 = predicted_dices.validated_data["dice_number1"]
-        dice_number2 = predicted_dices.validated_data["dice_number2"]
-        predictions = player.predictions.filter(countdown=countdown, is_active=True)
-        for predict in predictions:
-            if predict.dice_number1 == dice_number1 and predict.dice_number2 == dice_number2:
-                return Response({"error": "You've predict this dice before"}, status=status.HTTP_400_BAD_REQUEST)
-            if predict.dice_number1 == dice_number2 and predict.dice_number2 == dice_number1:
-                return Response({"error: You've predict this dice before"}, status=status.HTTP_400_BAD_REQUEST)
+        try:
+            predicted_dices.is_valid_predict(player=player, countdown=countdown)
+        except Exception as e:
+            return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
         predicted_dices.save()
         return Response(predicted_dices.data, status=status.HTTP_200_OK)
 
@@ -71,11 +67,10 @@ class PredictDiceAPI(APIView):
     def get(self, request):
         count_down: "CountDown" = CountDown.objects.get(is_active=True)
         if count_down.is_finished:
-            return Response([{"slot": None, "dice_number1": None, "dice_number2": None}], status=status.HTTP_200_OK)
+            return Response({"predictions": [], "slots": 1},
+                            status=status.HTTP_200_OK)
         player: "Player" = request.user
         prediction = player.predictions.filter(is_active=True, countdown=count_down)
-        if not prediction.exists():
-            return Response([{"slot": None, "dice_number1": None, "dice_number2": None}], status=status.HTTP_200_OK)
         serializer = PredictBoxSerializer({"predictions": prediction, "slots": player.predict_slot})
         return Response(serializer.data, status=status.HTTP_200_OK)
 
