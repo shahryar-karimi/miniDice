@@ -52,6 +52,16 @@ class PlayerSerializer(serializers.ModelSerializer):
 
 
 class ReferralSerializer(serializers.ModelSerializer):
+    referee = PlayerSerializer()
+
     class Meta:
         model = Referral
-        fields = ["referrer", "referee"]
+        fields = ["referee"]
+
+
+class ReferralsListSerializer(serializers.Serializer):
+    referral = ReferralSerializer(many=True)
+    count = serializers.SerializerMethodField()
+
+    def get_count(self, obj):
+        return obj["referral"].count()

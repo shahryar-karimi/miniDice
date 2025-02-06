@@ -189,7 +189,7 @@ class PlayerInfoAPI(APIView):
         return Response(serializer.data, status=status.HTTP_200_OK)
 
 
-class ReferralAPI(APIView):
+class ReferralCodeAPI(APIView):
     @swagger_auto_schema(
         operation_summary="Players referral code",
         operation_description="Get player referral code",
@@ -208,3 +208,24 @@ class ReferralAPI(APIView):
         player.set_referral_code()
         return Response({"referral_link": f"https://t.me/mini_dice_dev_bot?start={player.referral_code}"},
                         status=status.HTTP_200_OK)
+
+
+class ReferralsAPI(APIView):
+    @swagger_auto_schema(
+        operation_summary="Players referrals",
+        operation_description="Get player referrals",
+        responses={200: openapi.Response(
+            description="Referrals",
+            examples={
+                "application/json": {
+                    "referrer": 1023456789
+                }
+            }
+        )},
+        tags=["Player"]
+    )
+    def get(self, request):
+        player = request.user
+        referrals = player.get_referrals()
+        serializer = ReferralsListSerializer({"referral": referrals})
+        return Response(serializer.data, status=status.HTTP_200_OK)

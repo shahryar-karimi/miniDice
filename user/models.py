@@ -49,6 +49,9 @@ class Player(AbstractModel):
     def generate_referral_code():
         return ''.join(random.choices(string.ascii_letters + string.digits, k=10))
 
+    def get_referrals(self):
+        return Referral.objects.filter(referrer=self)
+
 
 class CountDown(AbstractModel):
     expire_dt = models.DateTimeField()
