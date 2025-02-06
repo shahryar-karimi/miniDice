@@ -1,9 +1,9 @@
+from django.utils import timezone
 from drf_yasg import openapi
 from drf_yasg.utils import swagger_auto_schema
 from rest_framework import status
 from rest_framework.response import Response
 from rest_framework.views import APIView
-from django.utils import timezone
 
 from user.serializers import *
 
@@ -187,3 +187,24 @@ class PlayerInfoAPI(APIView):
         player = request.user
         serializer = PlayerSerializer(player)
         return Response(serializer.data, status=status.HTTP_200_OK)
+
+
+class ReferralAPI(APIView):
+    @swagger_auto_schema(
+        operation_summary="Players referral code",
+        operation_description="Get player referral code",
+        responses={200: openapi.Response(
+            description="Referral Code",
+            examples={
+                "application/json": {
+                    "referral_code": 1023456789
+                }
+            }
+        )},
+        tags=["Player"]
+    )
+    def get(self, request):
+        player = request.user
+        player.set_referral_code()
+        return Response({"referral_link": f"https://t.me/mini_dice_dev_bot?start={player.referral_code}"},
+                        status=status.HTTP_200_OK)

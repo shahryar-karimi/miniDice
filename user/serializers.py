@@ -1,6 +1,6 @@
 from rest_framework import serializers
 
-from user.models import Prediction, CountDown, Player
+from user.models import Prediction, CountDown, Player, Referral
 
 
 class PredictDiceSerializer(serializers.ModelSerializer):
@@ -49,3 +49,9 @@ class PlayerSerializer(serializers.ModelSerializer):
     class Meta:
         model = Player
         fields = ["telegram_id", "telegram_username", "telegram_language_code", "wallet_address"]
+
+
+class ReferralSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Referral
+        fields = ["referrer", "referee"]

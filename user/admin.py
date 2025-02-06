@@ -1,7 +1,7 @@
 from django.contrib import admin
 from django.utils.translation import gettext_lazy as _
 
-from user.models import Player, Prediction, CountDown
+from user.models import Player, Prediction, CountDown, Referral
 
 
 class ConnectWalletFilter(admin.SimpleListFilter):
@@ -20,6 +20,7 @@ class ConnectWalletFilter(admin.SimpleListFilter):
         if self.value() == 'exist':
             return queryset.filter(wallet_address__isnull=False)
         return queryset  # Default: show all
+
 
 class OpenWebAppFilter(admin.SimpleListFilter):
     title = _('web app opened')  # Display name in the filter section
@@ -42,14 +43,17 @@ class OpenWebAppFilter(admin.SimpleListFilter):
 @admin.register(Player)
 class PlayerAdmin(admin.ModelAdmin):
     list_display = (
-        "telegram_id", "insert_dt", "telegram_username", "first_name", "last_name", "telegram_language_code", "auth_token",
+        "telegram_id", "insert_dt", "telegram_username", "first_name", "last_name", "telegram_language_code",
+        "auth_token", "referral_code",
         "wallet_address", "wallet_insert_dt")
     search_fields = ("telegram_id", "telegram_username")
     list_filter = ("is_active", ConnectWalletFilter, OpenWebAppFilter)
     fieldsets = (
         (None,
-         {'fields': ("telegram_id", "telegram_username", "telegram_language_code", "auth_token", "wallet_address",
-                     "wallet_insert_dt")},),
+         {'fields': (
+             "telegram_id", "referral_code", "telegram_username", "telegram_language_code", "auth_token",
+             "wallet_address",
+             "wallet_insert_dt")},),
     )
     ordering = ('telegram_id',)
 
@@ -104,3 +108,12 @@ class CountDownAdmin(admin.ModelAdmin):
         if obj.is_finished:
             return obj.get_won_players_count()
         return 0
+
+
+@admin.register(Referral)
+class ReferralAdmin(admin.ModelAdmin):
+    list_display = ("referrer", "referee", "insert_dt")
+    fieldsets = (
+        (None,
+         {'fields': ("referrer", "referee")},),
+    )

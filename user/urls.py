@@ -8,5 +8,5 @@ urlpatterns = [
     path('winners/', LastWinnersAPI.as_view(), name='winners'),
     path('connect-wallet/', ConnectWalletAPI.as_view(), name='connect-wallet'),
     path('player/', PlayerInfoAPI.as_view(), name='end-event'),
-
+    path('referral-code/', ReferralAPI.as_view(), name='referral-code'),
 ]

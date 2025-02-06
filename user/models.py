@@ -1,3 +1,6 @@
+import random
+import string
+
 from django.core.validators import MinValueValidator, MaxValueValidator
 from django.db import models
 from django.utils import timezone
@@ -14,6 +17,7 @@ class Player(AbstractModel):
     auth_token = models.CharField(max_length=255, null=True, blank=True)
     wallet_address = models.CharField(max_length=255, null=True, blank=True)
     wallet_insert_dt = models.DateTimeField(blank=True, null=True)
+    referral_code = models.CharField(max_length=255, unique=True, null=True, blank=True)
 
     USERNAME_FIELD = 'telegram_id'
     USERNAME_FIELDS = ['telegram_id', 'telegram_username']
@@ -32,6 +36,18 @@ class Player(AbstractModel):
     def telegram_login(self):
         self.auth_token = self.telegram_id
         self.save()
+
+    def add_predict_chance(self):
+        print(f"{self.__str__()} referred someone!")
+
+    def set_referral_code(self):
+        if not self.referral_code:
+            self.referral_code = f"{self.telegram_id}{Player.generate_referral_code()}"
+            self.save(update_fields=['referral_code'])
+
+    @staticmethod
+    def generate_referral_code():
+        return ''.join(random.choices(string.ascii_letters + string.digits, k=10))
 
 
 class CountDown(AbstractModel):
@@ -95,3 +111,12 @@ class Prediction(AbstractModel):
         db_table = 'prediction'
         verbose_name = 'Prediction'
         verbose_name_plural = 'Predictions'
+
+
+class Referral(AbstractModel):
+    referrer = models.ForeignKey(Player, on_delete=models.CASCADE, unique=False)
+    referee = models.OneToOneField(Player, related_name="referrals", null=True, blank=True, on_delete=models.SET_NULL,
+                                   unique=False)
+
+    def __str__(self):
+        return f"{self.referrer} -> {self.referee}"

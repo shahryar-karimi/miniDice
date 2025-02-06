@@ -2,10 +2,22 @@ import sys
 from functools import wraps
 
 import telegram
+from asgiref.sync import sync_to_async
 
-from user.models import Player
+from user.models import Player, Referral
 
 ERROR_MESSAGE = ('Oops! It seems that an error has occurred, please write to support (contact in bio)!')
+
+
+@sync_to_async
+def refer_player(referral_code, player):
+    try:
+        referrer = Player.objects.get(referral_code=referral_code)
+        referrer.add_predict_chance()
+        player.set_referral_code()
+        Referral.objects.create(referrer=referrer, referee=player)
+    except Referral.DoesNotExist:
+        print("Referral does not exist")
 
 
 def handler_decor(log_type='F', update_user_info=True):
@@ -18,12 +30,16 @@ def handler_decor(log_type='F', update_user_info=True):
 
     def decor(func):
         @wraps(func)
-        async def wrapper(update, CallbackContext):
+        async def wrapper(update, context):
             def check_first_income():
                 if update and update.message and update.message.text:
                     query_words = update.message.text.split()
 
-            bot = CallbackContext.bot
+            bot = context.bot
+            referral_code = None
+            if context.args and len(context.args) > 0:
+                referral_code = context.args[0]
+            print(referral_code)
 
             user_details = update.effective_user
 
@@ -44,7 +60,6 @@ def handler_decor(log_type='F', update_user_info=True):
                 telegram_id=user_details.id,
                 defaults=user_adding_info
             )
-
             if created:
                 check_first_income()
             elif update_user_info:
@@ -60,7 +75,8 @@ def handler_decor(log_type='F', update_user_info=True):
                 check_first_income()
                 player.is_active = True
                 await player.asave()
-
+            if referral_code and created:
+                await refer_player(referral_code, player)
             raise_error = None
             try:
                 res = await func(bot, update, player)
