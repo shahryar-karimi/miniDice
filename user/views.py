@@ -27,7 +27,7 @@ class PredictDiceAPI(APIView):
     def post(self, request):
         countdown = CountDown.objects.get(is_active=True)
         if countdown.is_finished:
-            return Response({"error": "Countdown is finished. wait for new event."}, status=status.HTTP_403_FORBIDDEN)
+            return Response({"error": "Countdown is finished. wait for new event."}, status=status.HTTP_200_OK)
         player: Player = request.user
         predicted_dices = PredictDiceSerializer(data=request.data)
         predicted_dices.is_valid(raise_exception=True)
@@ -35,7 +35,7 @@ class PredictDiceAPI(APIView):
         try:
             predicted_dices.is_valid_predict(player=player, countdown=countdown)
         except Exception as e:
-            return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
+            return Response({"error": str(e)}, status=status.HTTP_200_OK)
         predicted_dices.save()
         return Response(predicted_dices.data, status=status.HTTP_200_OK)
 
@@ -121,7 +121,7 @@ class EndCountDownResultAPI(APIView):
             try:
                 count_down.end_countdown()
             except Exception as e:
-                return Response({"error": e.__str__()}, status=status.HTTP_400_BAD_REQUEST)
+                return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
             serializer = CountDownSerializer(data={"expire_dt": count_down.expire_dt,
                                                    "dice_number1": count_down.dice_number1,
                                                    "dice_number2": count_down.dice_number2})
