@@ -75,8 +75,14 @@ class PlayerSerializer(serializers.ModelSerializer):
         fields = ["telegram_id", "telegram_username", "telegram_language_code", "wallet_address"]
 
 
+class PlayerUsernameSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Player
+        fields = ["telegram_username"]
+
+
 class ReferralSerializer(serializers.ModelSerializer):
-    referee = PlayerSerializer()
+    referee = PlayerUsernameSerializer()
 
     class Meta:
         model = Referral
