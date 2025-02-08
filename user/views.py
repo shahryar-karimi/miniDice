@@ -25,7 +25,7 @@ class PredictDiceAPI(APIView):
         tags=["Predict"]
     )
     def post(self, request):
-        countdown = CountDown.objects.get(is_active=True)
+        countdown = CountDown.get_active_countdown()
         if countdown.is_finished:
             return Response({"error": "Countdown is finished. wait for new event."}, status=status.HTTP_200_OK)
         player: Player = request.user
@@ -65,7 +65,7 @@ class PredictDiceAPI(APIView):
         tags=["Predict"]
     )
     def get(self, request):
-        count_down: "CountDown" = CountDown.objects.get(is_active=True)
+        count_down: "CountDown" = CountDown.get_active_countdown()
         if count_down.is_finished:
             return Response({"predictions": [], "slots": 1},
                             status=status.HTTP_200_OK)
@@ -91,7 +91,7 @@ class CountDownResultAPI(APIView):
         tags=["Count down"]
     )
     def get(self, request):
-        count_down: "CountDown" = CountDown.objects.get(is_active=True)
+        count_down: "CountDown" = CountDown.get_active_countdown()
         if count_down:
             serializer = CountDownTimeSerializer(count_down)
             return Response(serializer.data, status=status.HTTP_200_OK)
@@ -116,7 +116,7 @@ class EndCountDownResultAPI(APIView):
         tags=["Count down"]
     )
     def get(self, request):
-        count_down: "CountDown" = CountDown.objects.get(is_active=True)
+        count_down: "CountDown" = CountDown.get_active_countdown()
         if count_down:
             try:
                 count_down.end_countdown()

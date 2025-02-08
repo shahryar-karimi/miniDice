@@ -96,6 +96,10 @@ class CountDown(AbstractModel):
     def get_won_players_count(self):
         return self.predictions.filter(is_win=True).distinct("player").count()
 
+    @staticmethod
+    def get_active_countdown():
+        return CountDown.objects.get(is_active=True)
+
 
 class Prediction(AbstractModel):
     player = models.ForeignKey(Player, on_delete=models.CASCADE, related_name='predictions')
