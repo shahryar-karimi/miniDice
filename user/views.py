@@ -28,7 +28,9 @@ class PredictDiceAPI(APIView):
         countdown = CountDown.get_active_countdown()
         if countdown.is_finished:
             return Response({"error": "Countdown is finished. wait for new event."}, status=status.HTTP_200_OK)
-        player: Player = request.user
+        player = request.user
+        if not player or not isinstance(player, Player):
+            return Response({"error": "Authentication error."}, status=status.HTTP_401_UNAUTHORIZED)
         predicted_dices = PredictDiceSerializer(data=request.data)
         predicted_dices.is_valid(raise_exception=True)
         predicted_dices.validated_data["player"] = player
@@ -69,7 +71,9 @@ class PredictDiceAPI(APIView):
         if count_down.is_finished:
             return Response({"predictions": [], "slots": 1},
                             status=status.HTTP_200_OK)
-        player: "Player" = request.user
+        player = request.user
+        if not player or not isinstance(player, Player):
+            return Response({"error": "Authentication error."}, status=status.HTTP_401_UNAUTHORIZED)
         prediction = player.predictions.filter(is_active=True, countdown=count_down)
         serializer = PredictBoxSerializer({"predictions": prediction, "slots": player.predict_slot})
         return Response(serializer.data, status=status.HTTP_200_OK)
@@ -172,6 +176,8 @@ class ConnectWalletAPI(APIView):
         except Exception as e:
             return Response({"error": "Invalid data input"}, status=status.HTTP_400_BAD_REQUEST)
         player = request.user
+        if not player or not isinstance(player, Player):
+            return Response({"error": "Authentication error."}, status=status.HTTP_401_UNAUTHORIZED)
         player.wallet_address = address
         if not player.wallet_insert_dt:
             player.wallet_insert_dt = timezone.now()
@@ -198,6 +204,8 @@ class PlayerInfoAPI(APIView):
     )
     def get(self, request):
         player = request.user
+        if not player or not isinstance(player, Player):
+            return Response({"error": "Authentication error."}, status=status.HTTP_401_UNAUTHORIZED)
         serializer = PlayerSerializer(player)
         return Response(serializer.data, status=status.HTTP_200_OK)
 
@@ -218,6 +226,8 @@ class ReferralCodeAPI(APIView):
     )
     def get(self, request):
         player = request.user
+        if not player or not isinstance(player, Player):
+            return Response({"error": "Authentication error."}, status=status.HTTP_401_UNAUTHORIZED)
         player.set_referral_code()
         return Response({"referral_link": f"https://t.me/mini_dice_dev_bot?start={player.referral_code}"},
                         status=status.HTTP_200_OK)
@@ -239,6 +249,8 @@ class ReferralsAPI(APIView):
     )
     def get(self, request):
         player = request.user
+        if not player or not isinstance(player, Player):
+            return Response({"error": "Authentication error."}, status=status.HTTP_401_UNAUTHORIZED)
         referrals = player.get_referrals()
         serializer = ReferralsListSerializer({"referral": referrals})
         return Response(serializer.data, status=status.HTTP_200_OK)
