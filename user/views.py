@@ -234,7 +234,7 @@ class ReferralCodeAPI(APIView):
         if not player or not isinstance(player, Player):
             return Response({"error": "Authentication error."}, status=status.HTTP_401_UNAUTHORIZED)
         player.set_referral_code()
-        return Response({"referral_link": f"https://t.me/mini_dice_dev_bot?start={player.referral_code}"},
+        return Response({"referral_link": f"https://t.me/Dicemaniacs_bot?start={player.referral_code}"},
                         status=status.HTTP_200_OK)
 
 
