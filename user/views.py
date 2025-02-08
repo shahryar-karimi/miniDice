@@ -74,8 +74,13 @@ class PredictDiceAPI(APIView):
         player = request.user
         if not player or not isinstance(player, Player):
             return Response({"error": "Authentication error."}, status=status.HTTP_401_UNAUTHORIZED)
-        prediction = player.predictions.filter(is_active=True, countdown=count_down)
-        serializer = PredictBoxSerializer({"predictions": prediction, "slots": player.predict_slot})
+        _predictions = player.predictions.filter(is_active=True, countdown=count_down).order_by("slot")
+        slots = player.predict_slot
+        predictions = list(_predictions)
+        for i in range(1, slots + 1):
+            if not _predictions.filter(slot=i).exists():
+                predictions.append({"slot": i, "dice_number1": None, "dice_number2": None})
+        serializer = PredictBoxSerializer({"predictions": predictions, "slots": slots})
         return Response(serializer.data, status=status.HTTP_200_OK)
 
 
