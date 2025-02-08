@@ -10,4 +10,5 @@ urlpatterns = [
     path('player/', PlayerInfoAPI.as_view(), name='end-event'),
     path('referral-code/', ReferralCodeAPI.as_view(), name='referral-code'),
     path('referrals/', ReferralsAPI.as_view(), name='referrals'),
+    path('missions/', MissionsCheckboxAPI.as_view(), name='missions'),
 ]

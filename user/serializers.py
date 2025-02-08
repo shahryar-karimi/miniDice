@@ -95,3 +95,15 @@ class ReferralsListSerializer(serializers.Serializer):
 
     def get_count(self, obj):
         return obj["referral"].count()
+
+
+class MissionCheckboxSerializer(serializers.Serializer):
+    has_invite = serializers.SerializerMethodField()
+    has_submit = serializers.SerializerMethodField()
+
+    def get_has_invite(self, obj: Player):
+        return obj.predict_slot > 1
+
+    def get_has_submit(self, obj: Player):
+        countdown = CountDown.get_active_countdown()
+        return obj.predictions.filter(countdown=countdown, is_active=True).exists()

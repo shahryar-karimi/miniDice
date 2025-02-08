@@ -242,3 +242,25 @@ class ReferralsAPI(APIView):
         referrals = player.get_referrals()
         serializer = ReferralsListSerializer({"referral": referrals})
         return Response(serializer.data, status=status.HTTP_200_OK)
+
+
+class MissionsCheckboxAPI(APIView):
+    @swagger_auto_schema(
+        operation_summary="Players referrals",
+        operation_description="Get player referrals",
+        responses={200: openapi.Response(
+            description="Referrals",
+            examples={
+                "application/json": {
+                    "referrer": 1023456789
+                }
+            }
+        )},
+        tags=["Player"]
+    )
+    def get(self, request):
+        player = request.user
+        if not player or not isinstance(player, Player):
+            return Response({"error": "Authentication error."}, status=status.HTTP_401_UNAUTHORIZED)
+        serializer = MissionCheckboxSerializer(player)
+        return Response(serializer.data, status=status.HTTP_200_OK)
