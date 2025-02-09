@@ -13,7 +13,9 @@ https://docs.djangoproject.com/en/5.1/ref/settings/
 from pathlib import Path
 
 from decouple import AutoConfig
+from import_export.formats.base_formats import CSV, XLSX
 
+IMPORT_FORMATS = [CSV, XLSX]
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 config = AutoConfig(search_path=BASE_DIR)
@@ -44,6 +46,7 @@ INSTALLED_APPS = [
     "constance.backends.database",
     "rest_framework",
     'telegramBot.apps.TelegrambotConfig',
+    'import_export',
 ]
 
 MIDDLEWARE = [

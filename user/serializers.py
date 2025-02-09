@@ -30,7 +30,7 @@ class PredictDiceSerializer(serializers.ModelSerializer):
         predictions = player.predictions.filter(countdown=countdown, is_active=True)
         for predict in predictions:
             if predict.dice_number1 == dice_number1 and predict.dice_number2 == dice_number2:
-                raise ValueError("You've predict this dice before")
+                raise ValueError("You have predicted this dice before")
             if predict.dice_number1 == dice_number2 and predict.dice_number2 == dice_number1:
                 raise ValueError("You've predict this dice before")
 

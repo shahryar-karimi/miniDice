@@ -1,7 +1,9 @@
 from django.contrib import admin
 from django.utils.translation import gettext_lazy as _
+from import_export.admin import ImportExportModelAdmin
 
 from user.models import Player, Prediction, CountDown, Referral
+from user.resource import PlayerResource
 
 
 class ConnectWalletFilter(admin.SimpleListFilter):
@@ -41,7 +43,8 @@ class OpenWebAppFilter(admin.SimpleListFilter):
 
 
 @admin.register(Player)
-class PlayerAdmin(admin.ModelAdmin):
+class PlayerAdmin(ImportExportModelAdmin, admin.ModelAdmin):
+    resource_class = PlayerResource
     list_display = (
         "telegram_id", "insert_dt", "telegram_username", "first_name", "last_name", "telegram_language_code",
         "auth_token", "referral_code", "predict_slot", "wallet_address", "wallet_insert_dt")
