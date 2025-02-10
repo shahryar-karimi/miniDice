@@ -40,7 +40,6 @@ def handler_decor(log_type='F', update_user_info=True):
             referral_code = None
             if context.args and len(context.args) > 0:
                 referral_code = context.args[0]
-            print(referral_code)
 
             user_details = update.effective_user
 
