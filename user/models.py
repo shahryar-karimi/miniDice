@@ -39,7 +39,8 @@ class Player(AbstractModel):
         self.save()
 
     def add_predict_slot(self):
-        self.predict_slot += 1
+        if self.predict_slot < 21:
+            self.predict_slot += 1
 
     def set_referral_code(self):
         if not self.referral_code:

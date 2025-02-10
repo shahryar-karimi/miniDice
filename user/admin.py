@@ -119,3 +119,5 @@ class ReferralAdmin(admin.ModelAdmin):
         (None,
          {'fields': ("referrer", "referee")},),
     )
+    search_fields = ['referrer__telegram_id', 'referrer__telegram_username', 'referrer__first_name',
+                     'referrer__last_name']
