@@ -3,7 +3,7 @@ from django.utils.translation import gettext_lazy as _
 from import_export.admin import ImportExportModelAdmin
 
 from user.models import Player, Prediction, CountDown, Referral
-from user.resource import PlayerResource
+from user.resource import PlayerResource, PredictionResource
 
 
 class ConnectWalletFilter(admin.SimpleListFilter):
@@ -60,7 +60,8 @@ class PlayerAdmin(ImportExportModelAdmin, admin.ModelAdmin):
 
 
 @admin.register(Prediction)
-class PredictionAdmin(admin.ModelAdmin):
+class PredictionAdmin(ImportExportModelAdmin, admin.ModelAdmin):
+    resource_class = PredictionResource
     list_display = (
         "player", "insert_dt", "countdown", "dice_number1", "dice_number2", "slot", "is_win", "is_active", "wallet",
         "amount")
