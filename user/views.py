@@ -31,6 +31,8 @@ class PredictDiceAPI(APIView):
         player = request.user
         if not player or not isinstance(player, Player):
             return Response({"error": "Authentication error."}, status=status.HTTP_401_UNAUTHORIZED)
+        if not player.wallet_address:
+            return Response({"error": "Wallet is not connected yet."}, status=status.HTTP_200_OK)
         predicted_dices = PredictDiceSerializer(data=request.data)
         predicted_dices.is_valid(raise_exception=True)
         predicted_dices.validated_data["player"] = player
