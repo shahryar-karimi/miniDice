@@ -6,10 +6,14 @@ from user.models import Prediction, CountDown, Player, Referral
 class PredictDiceSerializer(serializers.ModelSerializer):
     username = serializers.SerializerMethodField()
     amount = serializers.SerializerMethodField()
+    wallet = serializers.SerializerMethodField()
 
     class Meta:
         model = Prediction
-        fields = ["username", "dice_number1", "dice_number2", "amount", "slot"]
+        fields = ["username", "dice_number1", "dice_number2", "amount", "slot", "wallet"]
+
+    def get_wallet(self, obj):
+        return obj.player.wallet_address
 
     def get_username(self, obj: Prediction):
         return obj.player.__str__()

@@ -162,7 +162,7 @@ class LastWinnersAPI(APIView):
         tags=["Count down"]
     )
     def get(self, request):
-        countdown: "CountDown" = CountDown.objects.filter(expire_dt__lte=timezone.now()).order_by("-expire_dt").first()
+        countdown: "CountDown" = CountDown.get_last_countdown()
         predictions = countdown.predictions.filter(is_win=True).distinct("player")
         serializer = PredictDiceSerializer(predictions, many=True)
         return Response(serializer.data, status=status.HTTP_200_OK)

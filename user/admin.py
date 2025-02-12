@@ -1,7 +1,7 @@
 from django.contrib import admin
 from django.utils.translation import gettext_lazy as _
 from import_export.admin import ImportExportModelAdmin
-
+from django.contrib.admin import DateFieldListFilter
 from user.models import Player, Prediction, CountDown, Referral
 from user.resource import PlayerResource, PredictionResource
 
@@ -122,3 +122,4 @@ class ReferralAdmin(admin.ModelAdmin):
     )
     search_fields = ['referrer__telegram_id', 'referrer__telegram_username', 'referrer__first_name',
                      'referrer__last_name']
+    list_filter = [('insert_dt', DateFieldListFilter)]

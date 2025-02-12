@@ -101,6 +101,10 @@ class CountDown(AbstractModel):
     def get_active_countdown():
         return CountDown.objects.get(is_active=True)
 
+    @staticmethod
+    def get_last_countdown():
+        return CountDown.objects.filter(expire_dt__lte=timezone.now()).order_by("-expire_dt").first()
+
 
 class Prediction(AbstractModel):
     player = models.ForeignKey(Player, on_delete=models.CASCADE, related_name='predictions')
