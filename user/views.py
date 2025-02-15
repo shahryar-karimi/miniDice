@@ -2,6 +2,7 @@ from django.utils import timezone
 from drf_yasg import openapi
 from drf_yasg.utils import swagger_auto_schema
 from rest_framework import status
+from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
@@ -87,6 +88,9 @@ class PredictDiceAPI(APIView):
 
 
 class CountDownResultAPI(APIView):
+    authentication_classes = []
+    permission_classes = [AllowAny]
+
     @swagger_auto_schema(
         operation_summary="Count down expiration date",
         operation_description="Get count down expiration date with result of the 2 dices.",
@@ -143,6 +147,9 @@ class EndCountDownResultAPI(APIView):
 
 
 class LastWinnersAPI(APIView):
+    authentication_classes = []
+    permission_classes = [AllowAny]
+
     @swagger_auto_schema(
         operation_summary="Last winners",
         operation_description="Get last count down winners.",
