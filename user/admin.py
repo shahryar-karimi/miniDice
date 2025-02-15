@@ -91,7 +91,8 @@ class PredictionAdmin(ImportExportModelAdmin, admin.ModelAdmin):
 @admin.register(CountDown)
 class CountDownAdmin(admin.ModelAdmin):
     list_display = (
-        "insert_dt", "expire_dt", "dice_number1", "dice_number2", "is_active", "amount", "won_players", "is_finished")
+        "insert_dt", "expire_dt", "dice_number1", "dice_number2", "is_active", "amount", "predictions_count",
+        "won_players", "is_finished")
     list_filter = ("is_active",)
     fieldsets = (
         (None,
@@ -114,6 +115,9 @@ class CountDownAdmin(admin.ModelAdmin):
             return obj.get_won_players_count()
         return 0
 
+    @admin.display(description='All predictions count')
+    def predictions_count(self, obj: CountDown):
+        return obj.predictions.filter(is_active=True).count()
 
 @admin.register(Referral)
 class ReferralAdmin(admin.ModelAdmin):
