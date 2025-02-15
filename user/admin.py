@@ -57,6 +57,7 @@ class PlayerAdmin(ImportExportModelAdmin, admin.ModelAdmin):
              "wallet_address", "predict_slot", "wallet_insert_dt")},),
     )
     ordering = ('telegram_id',)
+    date_hierarchy = 'wallet_insert_dt'
 
 
 @admin.register(Prediction)
@@ -71,6 +72,7 @@ class PredictionAdmin(ImportExportModelAdmin, admin.ModelAdmin):
         (None,
          {'fields': ("player", "dice_number1", "dice_number2", "countdown", "slot")},),
     )
+    date_hierarchy = 'insert_dt'
 
     @admin.display(description='wallet address')
     def wallet(self, obj: Prediction):
@@ -123,3 +125,4 @@ class ReferralAdmin(admin.ModelAdmin):
     search_fields = ['referrer__telegram_id', 'referrer__telegram_username', 'referrer__first_name',
                      'referrer__last_name']
     list_filter = [('insert_dt', DateFieldListFilter)]
+    date_hierarchy = 'insert_dt'
