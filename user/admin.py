@@ -3,7 +3,7 @@ from django.utils.translation import gettext_lazy as _
 from import_export.admin import ImportExportModelAdmin
 from django.contrib.admin import DateFieldListFilter
 from user.models import Player, Prediction, CountDown, Referral
-from user.resource import PlayerResource, PredictionResource
+from user.resource import *
 
 
 class ConnectWalletFilter(admin.SimpleListFilter):
@@ -43,7 +43,7 @@ class OpenWebAppFilter(admin.SimpleListFilter):
 
 
 @admin.register(Player)
-class PlayerAdmin(ImportExportModelAdmin, admin.ModelAdmin):
+class PlayerAdmin(ImportExportModelAdmin):
     resource_class = PlayerResource
     list_display = (
         "telegram_id", "insert_dt", "telegram_username", "first_name", "last_name", "telegram_language_code",
@@ -61,7 +61,7 @@ class PlayerAdmin(ImportExportModelAdmin, admin.ModelAdmin):
 
 
 @admin.register(Prediction)
-class PredictionAdmin(ImportExportModelAdmin, admin.ModelAdmin):
+class PredictionAdmin(ImportExportModelAdmin):
     resource_class = PredictionResource
     list_display = (
         "player", "insert_dt", "countdown", "dice_number1", "dice_number2", "slot", "is_win", "is_active", "wallet",
@@ -120,7 +120,8 @@ class CountDownAdmin(admin.ModelAdmin):
         return obj.predictions.filter(is_active=True).count()
 
 @admin.register(Referral)
-class ReferralAdmin(admin.ModelAdmin):
+class ReferralAdmin(ImportExportModelAdmin):
+    resource_class = ReferralResource
     list_display = ("referrer", "referee", "insert_dt")
     fieldsets = (
         (None,

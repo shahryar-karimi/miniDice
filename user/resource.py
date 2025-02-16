@@ -1,7 +1,7 @@
 from import_export import resources
 from import_export.fields import Field
 
-from .models import Player, Prediction
+from .models import Player, Prediction, Referral
 
 
 class PlayerResource(resources.ModelResource):
@@ -28,3 +28,8 @@ class PredictionResource(resources.ModelResource):
             countdown = obj.countdown
             return countdown.amount / countdown.get_won_players_count()
         return 0
+
+class ReferralResource(resources.ModelResource):
+    class Meta:
+        model = Referral
+        fields = ['referrer', 'referee', 'insert_dt']
