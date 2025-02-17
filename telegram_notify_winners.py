@@ -52,7 +52,7 @@ Your next reward could be even bigger. Ready to go again? 🎲💸
 
 @dicemaniacs"""
             await bot.send_animation(chat_id=player.telegram_id,
-                                     animation="../../data/media/winners_gif.gif.mp4",
+                                     animation="./data/media/winners_gif.gif.mp4",
                                      caption=message)
         except Exception as e:
             print(f"Failed to send message to {player.telegram_id}: {e}")
