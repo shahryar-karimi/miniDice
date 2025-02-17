@@ -8,14 +8,27 @@ django.setup()
 from user.models import Player, CountDown
 from django.conf import settings
 from telegram import Bot
+from django.utils import timezone
+
+
+async def get_countdown():
+    return await sync_to_async(
+        lambda: CountDown.objects.filter(expire_dt__lte=timezone.now()).order_by("-expire_dt").first(),
+        thread_sensitive=True)()
+
+
+async def get_winners(countdown):
+    return list(await sync_to_async(
+        lambda: list(Player.objects.prefetch_related("predictions").filter(predictions__countdown_id=countdown,
+                                                                           predictions__is_win=True)),
+        thread_sensitive=True
+    )())
 
 
 async def get_players():
     """Fetch chat IDs asynchronously using Django's ORM in a thread-safe way"""
-    countdown: CountDown = CountDown.get_last_countdown()
-    return sync_to_async(Player.objects.select_related("prediction")
-                         .filter(predictions__countdown_id=countdown,
-                                 predictions__is_win=True))
+    countdown = await get_countdown()
+    return await get_winners(countdown)
 
 
 async def broadcast_message():
@@ -38,7 +51,9 @@ But why stop here? There’s more waiting for you! 🚀
 Your next reward could be even bigger. Ready to go again? 🎲💸
 
 @dicemaniacs"""
-            await bot.send_animation(chat_id=player.telegram_id, animation="./data/media/Trump_meme.MOV", caption=message)
+            await bot.send_animation(chat_id=player.telegram_id,
+                                     animation="../../data/media/winners_gif.gif.mp4",
+                                     caption=message)
         except Exception as e:
             print(f"Failed to send message to {player.telegram_id}: {e}")
 
