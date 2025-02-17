@@ -50,6 +50,12 @@ class PredictBoxSerializer(serializers.Serializer):
     slots = serializers.IntegerField()
 
 
+class PredictionHistoryRowSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Prediction
+        fields = ['insert_dt', 'dice_number1', 'dice_number2', 'slot', 'is_win', 'is_active']
+
+
 class WalletAddressSerializer(serializers.ModelSerializer):
     class Meta:
         model = Player

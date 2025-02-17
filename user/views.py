@@ -290,3 +290,19 @@ class MissionsCheckboxAPI(APIView):
             return Response({"error": "Authentication error."}, status=status.HTTP_401_UNAUTHORIZED)
         serializer = MissionCheckboxSerializer(player)
         return Response(serializer.data, status=status.HTTP_200_OK)
+
+
+class PredictionsAPI(APIView):
+    @swagger_auto_schema(
+        operation_summary="Prediction history",
+        operation_description="Gets all predictions of a player .",
+        responses={status.HTTP_200_OK: PredictionHistoryRowSerializer(many=True)},
+        tags=["Predict"]
+    )
+    def get(self, request):
+        player = request.user
+        if not player or not isinstance(player, Player):
+            return Response({"error": "Authentication error."}, status=status.HTTP_401_UNAUTHORIZED)
+        predictions = player.predictions.order_by("-insert_dt")
+        serializer = PredictionHistoryRowSerializer(predictions, many=True)
+        return Response(serializer.data, status=status.HTTP_200_OK)
