@@ -23,10 +23,10 @@ async def get_players():
     
     print(f"Found {len(players_with_at_least_one_prediction)} players with at least one prediction")
     
-    alireza = await sync_to_async(Player.objects.get)(telegram_id=426083623)
+    alireza = await sync_to_async(list)(Player.objects.filter(telegram_id=426083623))    
     return alireza
     
-    return players_with_at_least_one_prediction
+    # return players_with_at_least_one_prediction
 
 async def broadcast_message():
     """Send message to all stored chat IDs"""
