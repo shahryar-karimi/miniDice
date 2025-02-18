@@ -115,7 +115,7 @@ class Prediction(AbstractModel):
 
     def save(self, *args, force_insert=False, force_update=False, using=None, update_fields=None):
         if self.countdown_id is None:
-            self.countdown = CountDown.objects.get(is_active=True)
+            self.countdown = CountDown.get_active_countdown()
         Prediction.objects.filter(is_active=True, player=self.player, countdown=self.countdown, slot=self.slot).update(
             is_active=False)
         super().save(force_insert, force_update, using, update_fields)
