@@ -20,13 +20,8 @@ async def get_players():
         Player.objects.annotate(prediction_count=Count('predictions'))  # Annotate player with the count of predictions
         .filter(prediction_count__gt=0)  # Only players with at least one prediction
     )
-    
-    print(f"Found {len(players_with_at_least_one_prediction)} players with at least one prediction")
-    
-    alireza = await sync_to_async(list)(Player.objects.filter(telegram_id=426083623))    
-    return alireza
-    
-    # return players_with_at_least_one_prediction
+        
+    return players_with_at_least_one_prediction
 
 async def broadcast_message():
     """Send message to all stored chat IDs"""
@@ -36,9 +31,9 @@ async def broadcast_message():
     for player in players:
         try:
             
-            message = f"""Hey Dear {player.first_name}, Loyal Citizen of Dice Maniacs! 👑
+            message = f"""Hey {player.first_name}, Loyal Citizen of Dice Maniacs! 👑
 
-📢 Citizens of Dice Maniacs, Let’s Unlock Bigger Rewards! 🚀
+📢 Let’s Unlock Bigger Rewards! 🚀
 
 Did you know that once our community reaches 8,000 members, the daily rewards will DOUBLE? 💰🔥
 
