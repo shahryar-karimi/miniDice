@@ -64,6 +64,7 @@ class CountDown(AbstractModel):
                                                     null=True,
                                                     blank=True)
     amount = models.PositiveIntegerField(default=0, null=True, blank=True)
+    has_end = models.BooleanField(default=False)
 
     def __str__(self):
         return f"({self.dice_number1} {self.dice_number2}) {self.expire_dt}"
@@ -78,28 +79,26 @@ class CountDown(AbstractModel):
         return self.expire_dt <= timezone.now()
 
     def end_countdown(self):
-        predictions_filter = self.predictions.filter(is_active=True)
-        predictions_filter.update(is_win=False)
-        if self.is_finished:
-            predictions_filter.filter(dice_number1=self.dice_number1, dice_number2=self.dice_number2).update(
-                is_win=True)
-            predictions_filter.filter(dice_number1=self.dice_number2, dice_number2=self.dice_number1).update(
-                is_win=True)
-            Player.objects.all().update(predict_slot=1)
-        else:
-            raise ValueError("Count down time is not finished yet.")
-
-    def save(self, *args, force_insert=False, force_update=False, using=None, update_fields=None):
-        if self.id is None:
-            CountDown.objects.filter(is_active=True).update(is_active=False)
-        super().save(force_insert, force_update, using, update_fields)
+        if not self.has_end:
+            predictions_filter = self.predictions.filter(is_active=True)
+            predictions_filter.update(is_win=False)
+            if self.is_finished:
+                self.has_end = True
+                self.save()
+                predictions_filter.filter(dice_number1=self.dice_number1, dice_number2=self.dice_number2).update(
+                    is_win=True)
+                predictions_filter.filter(dice_number1=self.dice_number2, dice_number2=self.dice_number1).update(
+                    is_win=True)
+                Player.objects.all().update(predict_slot=1)
+            else:
+                raise ValueError("Count down time is not finished yet.")
 
     def get_won_players_count(self):
         return self.predictions.filter(is_win=True).distinct("player").count()
 
     @staticmethod
     def get_active_countdown():
-        return CountDown.objects.get(is_active=True)
+        return CountDown.objects.filter(expire_dt__gte=timezone.now()).order_by('expire_dt').first()
 
     @staticmethod
     def get_last_countdown():

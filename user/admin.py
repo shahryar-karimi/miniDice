@@ -92,11 +92,11 @@ class PredictionAdmin(ImportExportModelAdmin):
 class CountDownAdmin(admin.ModelAdmin):
     list_display = (
         "insert_dt", "expire_dt", "dice_number1", "dice_number2", "is_active", "amount", "predictions_count",
-        "won_players", "is_finished")
+        "won_players", "is_finished", "has_end")
     list_filter = ("is_active",)
     fieldsets = (
         (None,
-         {'fields': ("expire_dt", "dice_number1", "dice_number2", "is_active", "amount")},),
+         {'fields': ("expire_dt", "dice_number1", "dice_number2", "is_active", "amount", "has_end")},),
     )
     actions = ["end_countdown"]
 
