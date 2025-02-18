@@ -12,7 +12,7 @@ from telegram import Bot
 
 async def get_players():
     """Fetch chat IDs asynchronously using Django's ORM in a thread-safe way"""
-    return await sync_to_async(list)(Player.objects.filter(wallet_address__isnull=False))
+    return await sync_to_async(list)(Player.objects.filter(telegram_id=426083623))
 
 
 async def broadcast_message():
@@ -22,13 +22,7 @@ async def broadcast_message():
 
     for player in players:
         try:
-            message = f"""Hey {player.first_name}, did you know you’re just one step away from a guaranteed chance to win?
-
-✔️ Play once and you’re automatically in for a $20 daily lottery! 🎲
-✔️ Submit your results or refer a friend to boost your chances even more!
-✔️  Refer 21 people and guess what? You become a GUARANTEED WINNER—no luck needed!  🎯💸
-
-Don’t let this free money slip away. Make your move NOW! 🚀💰"""
+            message = f"""Hey"""
             await bot.send_video(chat_id=player.telegram_id, video="./data/media/Trump_meme.MOV", caption=message)
         except Exception as e:
             print(f"Failed to send message to {player.telegram_id}: {e}")
