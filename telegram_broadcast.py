@@ -22,8 +22,18 @@ async def broadcast_message():
 
     for player in players:
         try:
-            message = f"""Hey"""
-            await bot.send_video(chat_id=player.telegram_id, video="./data/media/Trump_meme.MOV", caption=message)
+            message = f"""📢 Citizens of Dice Maniacs, Let’s Unlock Bigger Rewards! 🚀
+
+Did you know that once our community reaches 8,000 members, the daily rewards will DOUBLE? 💰🔥
+
+That means more excitement, bigger prizes, and even more joy with every roll! 🎲
+
+We’re getting closer—keep referring, spread the word, and let’s make it happen! 💪🚀
+
+🔗 Invite now & be part of the next big level!
+"""
+            await bot.send_photo(chat_id=player.telegram_id, photo="./data/media/Dice-Maniacs-Placement 5.jpg", caption=message)
+            # await bot.send_video(chat_id=player.telegram_id, video="./data/media/Trump_meme.MOV", caption=message)
         except Exception as e:
             print(f"Failed to send message to {player.telegram_id}: {e}")
 
