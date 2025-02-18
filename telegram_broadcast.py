@@ -50,7 +50,7 @@ We’re getting closer—keep referring, spread the word, and let’s make it ha
 
 @dicemaniacs
 """
-            await bot.send_photo(chat_id=player.telegram_id, photo="./data/media/Dice-Maniacs-Placement 5.jpg", caption=message)
+            await bot.send_photo(chat_id=player.telegram_id, photo="./data/media/Dice-Maniacs-Placement.jpg", caption=message)
             # await bot.send_video(chat_id=player.telegram_id, video="./data/media/Trump_meme.MOV", caption=message)
         except Exception as e:
             print(f"Failed to send message to {player.telegram_id}: {e}")
