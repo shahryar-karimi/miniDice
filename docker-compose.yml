@@ -60,6 +60,20 @@ services:
     networks:
       - dev_network
 
+
+  dashboard:
+    container_name: dev_dashboard
+    image: dev_dashboard_image
+    build: 
+      context: .
+      dockerfile: ./dashboard/dockerfile
+    ports:
+      - "8501:8501"
+    env_file:
+      - ./dashboard/.env
+
+    networks:
+      - dev_network    
 volumes:
   postgres_data:
     driver: local
