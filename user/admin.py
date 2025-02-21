@@ -1,8 +1,11 @@
 from django.contrib import admin
+from django.contrib.admin import DateFieldListFilter
+from django.db.models import Count
+from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
 from import_export.admin import ImportExportModelAdmin
-from django.contrib.admin import DateFieldListFilter
-from user.models import Player, Prediction, CountDown, Referral
+
+from user.models import CountDown
 from user.resource import *
 
 
@@ -58,6 +61,19 @@ class PlayerAdmin(ImportExportModelAdmin):
     )
     ordering = ('telegram_id',)
     date_hierarchy = 'wallet_insert_dt'
+    actions = ['sync_referrals']
+
+    def sync_referrals(self, request, queryset):
+        today = timezone.make_aware(timezone.datetime.combine(timezone.datetime.today(), timezone.datetime.min.time()))
+        referrals = (Referral.objects.filter(insert_dt__gt=today)
+                     .values('referrer')
+                     .annotate(referral_count=Count('referrer')))
+        for referrer_data in referrals:
+            referrer_id = referrer_data['referrer']
+            referral_count = referrer_data['referral_count']
+            player = Player.objects.get(telegram_id=referrer_id)
+            player.available_slots.number = referral_count + 1
+            player.available_slots.save()
 
 
 @admin.register(Prediction)
@@ -118,6 +134,7 @@ class CountDownAdmin(admin.ModelAdmin):
     @admin.display(description='All predictions count')
     def predictions_count(self, obj: CountDown):
         return obj.predictions.filter(is_active=True).count()
+
 
 @admin.register(Referral)
 class ReferralAdmin(ImportExportModelAdmin):
