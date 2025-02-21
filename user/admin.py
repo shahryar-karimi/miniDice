@@ -47,14 +47,14 @@ class PlayerAdmin(ImportExportModelAdmin):
     resource_class = PlayerResource
     list_display = (
         "telegram_id", "insert_dt", "telegram_username", "first_name", "last_name", "telegram_language_code",
-        "auth_token", "referral_code", "predict_slot", "wallet_address", "wallet_insert_dt")
+        "auth_token", "referral_code", "available_slots", "wallet_address", "wallet_insert_dt")
     search_fields = ("telegram_id", "telegram_username")
     list_filter = ("is_active", ConnectWalletFilter, OpenWebAppFilter)
     fieldsets = (
         (None,
          {'fields': (
              "telegram_id", "referral_code", "telegram_username", "telegram_language_code", "auth_token",
-             "wallet_address", "predict_slot", "wallet_insert_dt")},),
+             "wallet_address", "wallet_insert_dt")},),
     )
     ordering = ('telegram_id',)
     date_hierarchy = 'wallet_insert_dt'
@@ -92,11 +92,11 @@ class PredictionAdmin(ImportExportModelAdmin):
 class CountDownAdmin(admin.ModelAdmin):
     list_display = (
         "insert_dt", "expire_dt", "dice_number1", "dice_number2", "is_active", "amount", "predictions_count",
-        "won_players", "is_finished")
+        "won_players", "is_finished", "has_end")
     list_filter = ("is_active",)
     fieldsets = (
         (None,
-         {'fields': ("expire_dt", "dice_number1", "dice_number2", "is_active", "amount")},),
+         {'fields': ("expire_dt", "dice_number1", "dice_number2", "is_active", "amount", "has_end")},),
     )
     actions = ["end_countdown"]
 

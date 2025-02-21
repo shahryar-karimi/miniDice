@@ -78,7 +78,7 @@ class PredictDiceAPI(APIView):
         if not player or not isinstance(player, Player):
             return Response({"error": "Authentication error."}, status=status.HTTP_401_UNAUTHORIZED)
         _predictions = player.predictions.filter(is_active=True, countdown=count_down).order_by("slot")
-        slots = player.predict_slot
+        slots = player.available_slots.number
         predictions = list(_predictions)
         for i in range(1, slots + 1):
             if not _predictions.filter(slot=i).exists():
@@ -131,16 +131,13 @@ class EndCountDownResultAPI(APIView):
         tags=["Count down"]
     )
     def get(self, request):
-        count_down: "CountDown" = CountDown.get_active_countdown()
+        count_down: "CountDown" = CountDown.get_last_countdown()
         if count_down:
             try:
                 count_down.end_countdown()
             except Exception as e:
                 return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
-            serializer = CountDownSerializer(data={"expire_dt": count_down.expire_dt,
-                                                   "dice_number1": count_down.dice_number1,
-                                                   "dice_number2": count_down.dice_number2})
-            serializer.is_valid(raise_exception=True)
+            serializer = CountDownSerializer(count_down)
             return Response(serializer.data, status=status.HTTP_200_OK)
         else:
             return Response({"error": "Active count down is not found"}, status=status.HTTP_404_NOT_FOUND)
