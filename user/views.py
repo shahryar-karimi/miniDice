@@ -78,7 +78,7 @@ class PredictDiceAPI(APIView):
         if not player or not isinstance(player, Player):
             return Response({"error": "Authentication error."}, status=status.HTTP_401_UNAUTHORIZED)
         _predictions = player.predictions.filter(is_active=True, countdown=count_down).order_by("slot")
-        slots = player.predict_slot
+        slots = player.available_slots.number
         predictions = list(_predictions)
         for i in range(1, slots + 1):
             if not _predictions.filter(slot=i).exists():

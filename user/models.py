@@ -18,7 +18,6 @@ class Player(AbstractModel):
     wallet_address = models.CharField(max_length=255, null=True, blank=True)
     wallet_insert_dt = models.DateTimeField(blank=True, null=True)
     referral_code = models.CharField(max_length=255, unique=True, null=True, blank=True)
-    predict_slot = models.PositiveSmallIntegerField(validators=[MinValueValidator(1), MaxValueValidator(21)], default=1)
 
     USERNAME_FIELD = 'telegram_id'
     USERNAME_FIELDS = ['telegram_id', 'telegram_username']
@@ -34,13 +33,13 @@ class Player(AbstractModel):
         verbose_name = 'Player'
         verbose_name_plural = 'Players'
 
+    @cached_property
+    def available_slots(self):
+        return Slot.get_slot(self)
+
     def telegram_login(self):
         self.auth_token = self.telegram_id
         self.save()
-
-    def add_predict_slot(self):
-        if self.predict_slot < 21:
-            self.predict_slot += 1
 
     def set_referral_code(self):
         if not self.referral_code:
@@ -133,3 +132,26 @@ class Referral(AbstractModel):
 
     def __str__(self):
         return f"{self.referrer} -> {self.referee}"
+
+
+class Slot(AbstractModel):
+    player = models.ForeignKey(Player, on_delete=models.CASCADE)
+    countdown = models.ForeignKey(CountDown, on_delete=models.CASCADE)
+    number = models.PositiveSmallIntegerField(validators=[MinValueValidator(1), MaxValueValidator(21)], default=1)
+
+    class Meta:
+        db_table = 'slot'
+        verbose_name = 'Slot'
+        verbose_name_plural = 'Slots'
+
+    def __str__(self):
+        return str(self.number)
+
+    def add_slot(self):
+        if self.number < 21:
+            self.number += 1
+            self.save()
+
+    @staticmethod
+    def get_slot(player: Player):
+        return Slot.objects.get_or_create(player=player, countdown=CountDown.get_active_countdown())[0]

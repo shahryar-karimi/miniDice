@@ -29,7 +29,7 @@ class PredictDiceSerializer(serializers.ModelSerializer):
         dice_number1 = self.validated_data["dice_number1"]
         dice_number2 = self.validated_data["dice_number2"]
         slot = self.validated_data["slot"]
-        if slot > player.predict_slot:
+        if slot > player.available_slots.number:
             raise ValueError(f"You don't have slot number {slot}")
         predictions = player.predictions.filter(countdown=countdown, is_active=True)
         for predict in predictions:
@@ -112,7 +112,7 @@ class MissionCheckboxSerializer(serializers.Serializer):
     has_submit = serializers.SerializerMethodField()
 
     def get_has_invite(self, obj: Player):
-        return obj.predict_slot > 1
+        return obj.available_slots.number > 1
 
     def get_has_submit(self, obj: Player):
         countdown = CountDown.get_active_countdown()

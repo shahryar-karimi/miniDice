@@ -13,8 +13,7 @@ ERROR_MESSAGE = ('Oops! It seems that an error has occurred, please write to sup
 def refer_player(referral_code, player):
     try:
         referrer = Player.objects.get(referral_code=referral_code)
-        referrer.add_predict_slot()
-        referrer.save(update_fields=['predict_slot'])
+        referrer.available_slots.add_slot()
         player.set_referral_code()
         Referral.objects.create(referrer=referrer, referee=player)
     except Referral.DoesNotExist:
