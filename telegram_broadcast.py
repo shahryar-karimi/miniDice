@@ -1,6 +1,7 @@
-import django
-import os
 import asyncio
+import os
+
+import django
 from asgiref.sync import sync_to_async
 
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'miniDice.settings')
@@ -20,32 +21,33 @@ async def get_players():
         Player.objects.annotate(prediction_count=Count('predictions'))  # Annotate player with the count of predictions
         .filter(prediction_count__gt=0)  # Only players with at least one prediction
     )
-        
+
     return players_with_at_least_one_prediction
+
+
+async def get_all_players():
+    return await sync_to_async(list)(Player.objects.all())
+
+
+async def get_non_russian():
+    return await sync_to_async(list)(Player.objects.all().exclude(telegram_language_code="ru"))
+
 
 async def broadcast_message():
     """Send message to all stored chat IDs"""
     bot = Bot(token=settings.TELEGRAM_BOT_TOKEN)
-    players = await get_players()
-
+    players = await get_non_russian()
     for player in players:
         try:
-            
-            message = f"""Hey {player.first_name}, Loyal Citizen of Dice Maniacs! 👑
+            message = f"""🚀Something Exciting is Coming to Your Wallet Soon! 💰✨
 
-📢 Let’s Unlock Bigger Rewards! 🚀
+You're one of the first to be a part of something monumental about to occur in the land of dice! 🎲
 
-Did you know that once our community reaches 8,000 members, the daily rewards will DOUBLE? 💰🔥
+If you haven’t connected your wallet yet, now’s the time! 
 
-That means more excitement, bigger prizes, and even more joy with every roll! 🎲
-
-We’re getting closer—keep referring, spread the word, and let’s make it happen! 💪🚀
-
-🔗 Invite now & be part of the next big level!
-
-@dicemaniacs
-"""
-            await bot.send_photo(chat_id=player.telegram_id, photo="./data/media/Dice-Maniacs-Placement.jpg", caption=message)
+🔗Connect your wallet NOW before it’s too late!⏳"""
+            await bot.send_photo(chat_id=player.telegram_id, photo="./data/media/flying-to-dice-land.jpg",
+                                 caption=message)
             # await bot.send_video(chat_id=player.telegram_id, video="./data/media/Trump_meme.MOV", caption=message)
         except Exception as e:
             print(f"Failed to send message to {player.telegram_id}: {e}")
