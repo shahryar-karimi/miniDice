@@ -18,4 +18,4 @@ EXPOSE 8501
 
 RUN chmod +x /app/entrypoint.sh
 # Set the default command
-CMD ["sh", "/app/entrypoint.sh"]
+ENTRYPOINT ["/app/entrypoint.sh"]
