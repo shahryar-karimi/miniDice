@@ -65,8 +65,6 @@ services:
       context: ./dashboard
       dockerfile: Dockerfile
     container_name: streamlit_dashboard
-    volumes:
-      - ./dashboard:/app
     ports:
       - "8501:8501"
     env_file:
