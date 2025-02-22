@@ -68,13 +68,12 @@ def fetch_data():
     
     
 
-
 def main():
     # Create a password input box
     
     global password
-    password = st.text_input("Enter the password", type="password")
-    # password = STREAMLIT_PASSWORD
+    # password = st.text_input("Enter the password", type="password")
+    password = STREAMLIT_PASSWORD
     # Check if the entered password is correct
     if password == STREAMLIT_PASSWORD:
         st.write("Welcome! You have access to this page.")
@@ -93,11 +92,17 @@ def main():
         # st.dataframe(df_referrals)
         
         
+        df_players['player_insert_d'] = df_players['insert_dt'].apply(lambda x: str(x).split()[0])
+        df_players_joined_grouped = df_players.groupby(by='player_insert_d').size().reset_index()
+        df_players_joined_grouped.columns = ['insert_d', 'joined_players_count']
+        
+        
         df_players = df_players.loc[df_players['wallet_address'].notna()]
         df_players['insert_d'] = df_players['wallet_insert_dt'].apply(lambda x: str(x).split()[0])
         df_players_grouped = df_players.groupby(by= 'insert_d').size().reset_index()
         df_players_grouped = pd.DataFrame(df_players_grouped)
         df_players_grouped.columns = ['insert_d', 'count']
+    
         
         df_referrals['insert_d'] = df_referrals['insert_dt'].apply(lambda x: str(x).split()[0])
         df_referrals_grouped = df_referrals.groupby(by='insert_d').size().reset_index()
@@ -106,8 +111,8 @@ def main():
         
         df_predictions['insert_d'] = df_predictions['insert_dt'].apply(lambda x: str(x).split()[0])
         df_predictions_grouped_wins = df_predictions.groupby(by= 'insert_d').agg(is_win=('is_win', 'sum'),
-                                                                                 unique_players=('player', 'nunique'),
-                                                                                 predictions=('player', 'size')).reset_index()
+                                                                                 unique_players_count=('player', 'nunique'),
+                                                                                 predictions_count=('player', 'size')).reset_index()
         
 
         df_predictions_grouped_wins = pd.DataFrame(df_predictions_grouped_wins)
@@ -115,6 +120,8 @@ def main():
 
         df_tmp = df_players_grouped.join(df_referrals_grouped.set_index('insert_d'), on='insert_d', lsuffix='_wallets', rsuffix='_referrals')
         df_tmp = df_tmp.join(df_predictions_grouped_wins.set_index('insert_d'), on='insert_d')
+        df_tmp = df_tmp.join(df_players_joined_grouped.set_index('insert_d'), on='insert_d')
+        
         total_row = {'insert_d': 'Total'}
         for column in df_tmp.columns:
             if column == 'insert_d':
@@ -126,12 +133,6 @@ def main():
         
         st.write('Analyzed Data')
         st.dataframe(df_tmp)
-        
-        
-        
-        
-        
-        
         
         
         # Filter only winners from predictions
