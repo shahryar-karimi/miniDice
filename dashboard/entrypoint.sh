@@ -1,10 +1,4 @@
-#!/bin/bash
-set -e
+#!/bin/sh
 
-function exit_with_error {
-    echo "Error: $1"
-    exit 1
-}
-
-echo "Starting Dashboard ..."
-streamlit run app.py --server.port 8501
+# Start the Streamlit app
+streamlit run /app/app.py

@@ -1,22 +1,21 @@
-FROM python:3.12-slim
+# Use a base image with Python
+FROM python:3.9-slim
 
+# Set the working directory in the container
 WORKDIR /app
 
+# Copy the requirements file
+COPY reqs.txt /app/reqs.txt
 
-# Install system dependencies
-RUN apt-get update && apt-get install -y --no-install-recommends \
-    gcc \
-    libpq-dev \
-    zlib1g-dev \
-    build-essential \
-    netcat-traditional \
-    && rm -rf /var/lib/apt/lists/*
+# Install the dependencies
+RUN pip install -r /app/reqs.txt
 
+# Copy the rest of the application files
+COPY . /app
 
-COPY . .
-RUN pip install --no-cache-dir -r requirements.txt
-
+# Expose the port Streamlit will use
 EXPOSE 8501
 
 RUN chmod +x /app/entrypoint.sh
-ENTRYPOINT ["/app/entrypoint.sh"]
+# Set the default command
+CMD ["sh", "/app/entrypoint.sh"]
