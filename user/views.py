@@ -106,6 +106,13 @@ class CountDownResultAPI(APIView):
         tags=["Count down"]
     )
     def get(self, request):
+        prev_count_down: "CountDown" = CountDown.get_last_countdown()
+        if prev_count_down:
+            try:
+                prev_count_down.end_countdown()
+                prev_count_down.save()
+            except Exception:
+                pass
         count_down: "CountDown" = CountDown.get_active_countdown()
         if count_down:
             serializer = CountDownTimeSerializer(count_down)
