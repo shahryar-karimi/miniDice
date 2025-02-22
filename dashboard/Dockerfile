@@ -9,6 +9,7 @@ COPY requirements.txt /app/requirements.txt
 
 # Install the dependencies
 RUN pip install -r /app/requirements.txt
+RUN pip install psycopg2-binary
 
 # Copy the rest of the application files
 COPY . /app
