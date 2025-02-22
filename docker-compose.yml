@@ -60,6 +60,16 @@ services:
     networks:
       - dev_network
 
+  dashboard:
+    image: mini_dice_dashboard
+    container_name: dev-dashboard
+    ports:
+      - "8501:8501"
+    env_file:
+      - ./dashboard/.env
+    networks:
+      - dev_network
+
 volumes:
   postgres_data:
     driver: local
