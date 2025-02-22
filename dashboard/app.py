@@ -8,10 +8,12 @@ import time
 from datetime import datetime, timedelta
 import os
 
+
+
 host = os.getenv("POSTGRES_HOST")
 dbname = os.getenv("POSTGRES_DB")
 user = os.getenv("POSTGRES_USER")
-password = os.getenv("POSTGRES_PASSWORD")
+db_password = os.getenv("POSTGRES_PASSWORD")
 port = os.getenv("POSTGRES_PORT")
 
 STREAMLIT_PASSWORD = os.getenv("STREAMLIT_PASSWORD")
@@ -19,7 +21,7 @@ STREAMLIT_PASSWORD = os.getenv("STREAMLIT_PASSWORD")
 
 
 def fetch_data():
-    conn_string = f"host='{host}' dbname='{dbname}' user='{user}' password='{password}' port='{port}'"
+    conn_string = f"host='{host}' dbname='{dbname}' user='{user}' password='{db_password}' port='{port}'"
     conn = psycopg2.connect(conn_string)
     cursor = conn.cursor() 
 
@@ -38,12 +40,11 @@ def fetch_data():
     
         
     query = """
-        SELECT telegram_id, telegram_username, first_name, last_name, telegram_language_code, wallet_address, wallet_insert_dt, predict_slot
+        SELECT telegram_id, telegram_username, first_name, last_name, telegram_language_code, wallet_address, wallet_insert_dt, insert_dt
         FROM player
     """
     cursor.execute(query) 
-    df_players = pd.DataFrame(cursor.fetchall(), columns=['telegram_id', 'telegram_username', 'first_name', 'last_name', 'telegram_language_code', 'wallet_address', 'wallet_insert_dt', 'predict_slot'])
-    
+    df_players = pd.DataFrame(cursor.fetchall(), columns=['telegram_id', 'telegram_username', 'first_name', 'last_name', 'telegram_language_code', 'wallet_address', 'wallet_insert_dt', 'insert_dt'])
     
     query = """
         SELECT player_id, insert_dt, countdown_id, dice_number1, dice_number2, slot, is_win, is_active
@@ -73,7 +74,7 @@ def main():
     
     global password
     password = st.text_input("Enter the password", type="password")
-    # password = PASSWORD
+    # password = STREAMLIT_PASSWORD
     # Check if the entered password is correct
     if password == STREAMLIT_PASSWORD:
         st.write("Welcome! You have access to this page.")
@@ -82,16 +83,17 @@ def main():
         df_players, df_predictions, df_referrals = fetch_data()
         
         
-        st.write("Players Dataframe")
-        st.dataframe(df_players)
+        # st.write("Players Dataframe")
+        # st.dataframe(df_players)
         
-        st.write("Predictions Dataframe")
-        st.dataframe(df_predictions)
+        # st.write("Predictions Dataframe")
+        # st.dataframe(df_predictions)
         
-        st.write("Referrals Dataframe")
-        st.dataframe(df_referrals)
+        # st.write("Referrals Dataframe")
+        # st.dataframe(df_referrals)
         
         
+        df_players = df_players.loc[df_players['wallet_address'].notna()]
         df_players['insert_d'] = df_players['wallet_insert_dt'].apply(lambda x: str(x).split()[0])
         df_players_grouped = df_players.groupby(by= 'insert_d').size().reset_index()
         df_players_grouped = pd.DataFrame(df_players_grouped)
@@ -103,22 +105,34 @@ def main():
         df_referrals_grouped.columns = ['insert_d', 'count']
         
         df_predictions['insert_d'] = df_predictions['insert_dt'].apply(lambda x: str(x).split()[0])
-        df_predictions_grouped_wins = df_predictions.groupby(by= 'insert_d').agg({'is_win': 'sum'}).reset_index()
+        df_predictions_grouped_wins = df_predictions.groupby(by= 'insert_d').agg(is_win=('is_win', 'sum'),
+                                                                                 unique_players=('player', 'nunique'),
+                                                                                 predictions=('player', 'size')).reset_index()
+        
+
         df_predictions_grouped_wins = pd.DataFrame(df_predictions_grouped_wins)
-        def divide(x):
-            x = float(x)
-            if x == 0:
-                return 0
-            else:
-                return 100.0 / x
-        df_predictions_grouped_wins['win_amount'] = df_predictions_grouped_wins['is_win'].apply(lambda x: divide(x))
         df_predictions_grouped_wins = df_predictions_grouped_wins.rename(columns={'is_win': 'winners_count'})
-        
-        
-        st.write('Analyzed Data')
+
         df_tmp = df_players_grouped.join(df_referrals_grouped.set_index('insert_d'), on='insert_d', lsuffix='_wallets', rsuffix='_referrals')
         df_tmp = df_tmp.join(df_predictions_grouped_wins.set_index('insert_d'), on='insert_d')
+        total_row = {'insert_d': 'Total'}
+        for column in df_tmp.columns:
+            if column == 'insert_d':
+                continue
+            total_row[column] = df_tmp[column].sum()
+
+        print(total_row)
+        df_tmp.loc[len(df_tmp)] = total_row
+        
+        st.write('Analyzed Data')
         st.dataframe(df_tmp)
+        
+        
+        
+        
+        
+        
+        
         
         # Filter only winners from predictions
         df_winners = df_predictions[df_predictions['is_win'] == 1]
@@ -139,6 +153,7 @@ def main():
         df_winners_grouped['winners_count'] = df_winners_grouped['winner_wallets'].apply(lambda x: len(x))
         
         df_winners_grouped['winners_amount'] = df_winners_grouped['winners_count'].apply(lambda x: 100.0 / float(x))
+        df_winners_grouped = df_winners_grouped.loc[:, ['insert_d', 'winners_count', 'winners_amount', 'winner_accounts', 'winner_wallets']]
 
         # Display the result for winner accounts and wallets by date
         st.write('Winners Accounts and Wallets by Date')
