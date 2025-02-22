@@ -172,6 +172,70 @@ class LastWinnersAPI(APIView):
         return Response(serializer.data, status=status.HTTP_200_OK)
 
 
+class WinnersAPI(APIView):
+    authentication_classes = []
+    permission_classes = [AllowAny]
+
+    @swagger_auto_schema(
+        operation_summary="winners",
+        operation_description="Get winners by count down.",
+        manual_parameters=[
+            openapi.Parameter('id', openapi.IN_QUERY, description="This is countdown id",
+                              type=openapi.TYPE_INTEGER, required=True),
+        ],
+        responses={200: openapi.Response(
+            description="Count down",
+            examples={
+                "application/json": {
+                    "predictions": [{
+                        "username": "hamidmk",
+                        "dice_number1": 6,
+                        "dice_number2": 6,
+                        "amount": 100
+                    }, ]
+                }
+            }
+        )},
+        tags=["Count down"]
+    )
+    def get(self, request):
+        countdown_id = request.query_params.get('id')
+        if not CountDown.objects.filter(id=countdown_id).exists():
+            return Response({"error": "Count down not found."}, status=status.HTTP_404_NOT_FOUND)
+        countdown: "CountDown" = CountDown.objects.get(pk=countdown_id)
+        if not countdown.is_finished:
+            return Response({"error": "Countdown is not finished yet."}, status=status.HTTP_400_BAD_REQUEST)
+        predictions = countdown.predictions.filter(is_win=True)
+        serializer = PredictDiceSerializer(predictions, many=True)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
+
+class CountdownsAPI(APIView):
+    authentication_classes = []
+    permission_classes = [AllowAny]
+
+    @swagger_auto_schema(
+        operation_summary="Countdowns",
+        operation_description="Get all count downs.",
+        responses={200: openapi.Response(
+            description="Count down",
+            examples={
+                "application/json": {
+                    "predictions": [{
+                        "id": 4,
+                        "expire_dt": "2025-01-21 15:44:42.210841+03:30"
+                    }, ]
+                }
+            }
+        )},
+        tags=["Count down"]
+    )
+    def get(self, request):
+        countdowns = CountDown.objects.filter(expire_dt__lt=timezone.now())
+        serializer = CountdownListSerializer(countdowns, many=True)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
+
 class ConnectWalletAPI(APIView):
     @swagger_auto_schema(
         operation_summary="Connect wallet",
