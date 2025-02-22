@@ -73,8 +73,8 @@ def main():
     # Create a password input box
     
     global password
-    #password = st.text_input("Enter the password", type="password")
-    password = STREAMLIT_PASSWORD
+    password = st.text_input("Enter the password", type="password")
+    # password = STREAMLIT_PASSWORD
     # Check if the entered password is correct
     if password == STREAMLIT_PASSWORD:
         st.write("Welcome! You have access to this page.")
