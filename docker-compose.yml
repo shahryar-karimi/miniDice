@@ -70,7 +70,7 @@ services:
     ports:
       - "8501:8501"
     env_file:
-      - ./.env
+      - ./dashboard/.env
     networks:
       - dev_network
     depends_on:
