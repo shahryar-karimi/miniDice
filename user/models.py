@@ -88,7 +88,6 @@ class CountDown(AbstractModel):
                     is_win=True)
                 predictions_filter.filter(dice_number1=self.dice_number2, dice_number2=self.dice_number1).update(
                     is_win=True)
-                Player.objects.all().update(predict_slot=1)
             else:
                 raise ValueError("Count down time is not finished yet.")
 
