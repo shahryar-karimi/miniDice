@@ -136,7 +136,7 @@ def main():
             df_analyzed_data.loc[len(df_analyzed_data)] = total_row
             
             st.write('Analyzed Data')
-            st.dataframe(df_analyzed_data)
+            st.dataframe(df_analyzed_data.reset_index())
             
             
             # Filter only winners from predictions
@@ -150,7 +150,8 @@ def main():
             # Extracting unique winners by date
             df_winners_grouped = df_winners_merged.groupby('insert_d').agg(
                 winner_accounts=('telegram_username', lambda x: list(set(x))),
-                winner_wallets=('wallet_address', lambda x: list(set(x)))
+                winner_wallets=('wallet_address', lambda x: list(set(x))),
+                winner_ids=('telegram_id', lambda x: list(set(x)))
             ).reset_index()
             
             # st.dataframe(df_winners_grouped)
@@ -158,11 +159,11 @@ def main():
             df_winners_grouped['winners_count'] = df_winners_grouped['winner_wallets'].apply(lambda x: len(x))
             
             df_winners_grouped['winners_amount'] = df_winners_grouped['winners_count'].apply(lambda x: 100.0 / float(x))
-            df_winners_grouped = df_winners_grouped.loc[:, ['insert_d', 'winners_count', 'winners_amount', 'winner_accounts', 'winner_wallets']]
+            df_winners_grouped = df_winners_grouped.loc[:, ['insert_d', 'winners_count', 'winners_amount', 'winner_accounts', 'winner_wallets', 'winner_ids']]
 
             # Display the result for winner accounts and wallets by date
             st.write('Winners Accounts and Wallets by Date')
-            st.dataframe(df_winners_grouped)
+            st.dataframe(df_winners_grouped.reset_index())
         
         
         st.markdown('---', )
@@ -182,14 +183,26 @@ def main():
 
             if len(player_list) > 0:
                 # Randomly select one player from the list
+                st.markdown('---')
                 st.write('20$ Prize')
                 if st.button("Select a Random Player from Yesterday's Predictions"):
                     random_player = player_list.sample(n=1).iloc[0]
-                    st.write(f"Randomly selected player details:")
+                    
+                    # Save the selected player's details to session state
+                    st.session_state.selected_player = {
+                        'player': random_player['player'],
+                        'telegram_username': random_player['telegram_username'],
+                        'first_name': random_player['first_name'],
+                        'wallet_address': random_player['wallet_address']
+                    }
+    
+                if 'selected_player' in st.session_state:
+                    random_player = st.session_state.selected_player
                     st.write(f"Telegram ID: {random_player['player']}")
                     st.write(f"Username: {random_player['telegram_username']}")
                     st.write(f"First Name: {random_player['first_name']}")
                     st.write(f"Wallet Address: {random_player['wallet_address']}")
+
             else:
                 st.write("No players made predictions yesterday.")
                 
@@ -212,14 +225,26 @@ def main():
 
             if len(referrer_list) > 0:
                 # Randomly select one referrer from the list
+                st.markdown('---')
                 st.write('30$ Prize')
                 if st.button("Select a Random Referrer from Yesterday's Referrals"):
                     random_referrer = referrer_list.sample(n=1).iloc[0]
-                    st.write(f"Randomly selected referrer details (Date: {random_referrer['insert_d']}):")
-                    st.write(f"Telegram ID: {random_referrer['telegram_id']}")
+                    
+                    # Save the selected player's details to session state
+                    st.session_state.selected_referrer = {
+                        'player': random_referrer['telegram_id'],
+                        'telegram_username': random_referrer['telegram_username'],
+                        'first_name': random_referrer['first_name'],
+                        'wallet_address': random_referrer['wallet_address']
+                    }
+    
+                if 'selected_referrer' in st.session_state:
+                    random_referrer = st.session_state.selected_referrer
+                    st.write(f"Telegram ID: {random_referrer['player']}")
                     st.write(f"Username: {random_referrer['telegram_username']}")
                     st.write(f"First Name: {random_referrer['first_name']}")
                     st.write(f"Wallet Address: {random_referrer['wallet_address']}")
+                    
             else:
                 st.write("No referrers made referrals yesterday.")
                 
@@ -277,8 +302,23 @@ def main():
             if len(players_with_this_wallet_address) == 0:
                 pass
             else:
+                st.write('Static Data')
+                wins_all = 0
+                amount_won = 0 
+                for j in range(len(df_winners_grouped)):
+                    row = df_winners_grouped.iloc[j]
+                    winner_wallets = row['winner_wallets']
+                    if wallet_address in winner_wallets:
+                        wins = winner_wallets.count(wallet_address)
+                        wins_all += wins
+                        amount_won += wins * row['winners_amount']
+                st.write(f'Winning predictions counts: {wins_all}')
+                st.write(f'Amount won: {round(amount_won, 2)}')
+                
+                
+                st.markdown('---')
                 st.write('Players Connected to this wallet')
-                st.dataframe(players_with_this_wallet_address)
+                st.dataframe(players_with_this_wallet_address.reset_index())
                 
                 st.markdown('-'*3)
                 st.write('Predictions')
@@ -288,7 +328,7 @@ def main():
                     predictions_for_this_id = df_predictions.loc[df_predictions['player'] == telegram_id].reset_index()
                     if len(predictions_for_this_id) > 0:
                         st.write(f'Predictions for id: {telegram_id}')
-                        st.dataframe(predictions_for_this_id)
+                        st.dataframe(predictions_for_this_id.reset_index())
                     else:
                         st.write(f'No prediction for id: {telegram_id}')
 
@@ -301,7 +341,7 @@ def main():
                     referres_for_this_id = df_referrals.loc[df_referrals['referrer'] == telegram_id]
                     if len(referres_for_this_id) > 0:
                         st.write(f'Referrals for id: {telegram_id}')
-                        st.dataframe(referres_for_this_id)
+                        st.dataframe(referres_for_this_id.reset_index())
                     else:
                         st.write(f'No Referrals for id: {telegram_id}')
                 
@@ -313,24 +353,37 @@ def main():
             if telegram_id_extract_player != '':
                 try:
                     telegram_id_extract_player = int(telegram_id_extract_player)
+                    player_df = df_players.loc[df_players['telegram_id'] == telegram_id_extract_player].reset_index()
+                    if len(player_df) == 0:
+                        st.write('Player not found!')
+                    else:
+                        st.write('Static Data')
+                        wins_all = 0
+                        amount_won = 0 
+                        for j in range(len(df_winners_grouped)):
+                            row = df_winners_grouped.iloc[j]
+                            winner_ids = row['winner_ids']
+                            if telegram_id_extract_player in winner_ids:
+                                wins = winner_ids.count(telegram_id_extract_player)
+                                wins_all += wins
+                                amount_won += wins * row['winners_amount']
+                        st.write(f'Winning predictions counts: {wins_all}')
+                        st.write(f'Amount won: {round(amount_won, 2)}')
+                        
+                        
+                        st.write('Information:')
+                        st.dataframe(player_df.reset_index())
+                        
+                        
+                        player_predictions_df = df_predictions.loc[df_predictions['player'] == telegram_id_extract_player].reset_index()
+                        st.markdown('---')
+                        st.write('Predictions:')
+                        st.dataframe(player_predictions_df.reset_index())
                 except:
                     st.write('ID must be a number')
-                player_df = df_players.loc[df_players['telegram_id'] == telegram_id_extract_player].reset_index()
-                if len(player_df) == 0:
-                    st.write('Player not found!')
-                else:
-                    st.write('Information:')
-                    st.dataframe(player_df)
-                    
-                    
-                    player_predictions_df = df_predictions.loc[df_predictions['player'] == telegram_id_extract_player].reset_index()
-                    st.markdown('---')
-                    st.write('Predictions:')
-                    st.dataframe(player_predictions_df)
-        
-
+            
         del df_players, df_predictions, df_referrals
-
+            
 
 if __name__ == "__main__":
     main()
