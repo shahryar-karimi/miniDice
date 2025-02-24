@@ -7,6 +7,8 @@ from django.utils import timezone
 from django.utils.functional import cached_property
 from django_autoutils.model_utils import AbstractModel
 
+from utils.server_utils import calculate_player_point
+
 
 class Player(AbstractModel):
     telegram_id = models.BigIntegerField(unique=True, primary_key=True)
@@ -44,8 +46,7 @@ class Player(AbstractModel):
         prediction = self.predictions.distinct("countdown").count()
         referral_count = self.get_referrals().count()
         mini_app = self.auth_token is not None
-        # TODO add math function
-        return wallet + win + prediction + referral_count + mini_app
+        return calculate_player_point(wallet, win, prediction, referral_count, mini_app)
 
     def telegram_login(self):
         self.auth_token = self.telegram_id
