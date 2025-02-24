@@ -88,7 +88,7 @@ class CountDownTimeSerializer(serializers.ModelSerializer):
 class PlayerSerializer(serializers.ModelSerializer):
     class Meta:
         model = Player
-        fields = ["telegram_id", "telegram_username", "telegram_language_code", "wallet_address"]
+        fields = ["telegram_id", "telegram_username", "telegram_language_code", "wallet_address", "point"]
 
 
 class PlayerUsernameSerializer(serializers.ModelSerializer):

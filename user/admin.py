@@ -50,7 +50,7 @@ class PlayerAdmin(ImportExportModelAdmin):
     resource_class = PlayerResource
     list_display = (
         "telegram_id", "insert_dt", "telegram_username", "first_name", "last_name", "telegram_language_code",
-        "auth_token", "referral_code", "available_slots", "wallet_address", "wallet_insert_dt")
+        "auth_token", "referral_code", "available_slots", "wallet_address", "wallet_insert_dt", "point")
     search_fields = ("telegram_id", "telegram_username")
     list_filter = ("is_active", ConnectWalletFilter, OpenWebAppFilter, "telegram_language_code")
     fieldsets = (

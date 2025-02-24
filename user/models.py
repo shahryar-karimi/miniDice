@@ -37,6 +37,16 @@ class Player(AbstractModel):
     def available_slots(self):
         return Slot.get_slot(self)
 
+    @cached_property
+    def point(self):
+        wallet = self.wallet_address is not None
+        win = self.predictions.filter(is_win=True).count()
+        prediction = self.predictions.distinct("countdown").count()
+        referral_count = self.get_referrals().count()
+        mini_app = self.auth_token is not None
+        # TODO add math function
+        return wallet + win + prediction + referral_count + mini_app
+
     def telegram_login(self):
         self.auth_token = self.telegram_id
         self.save()
