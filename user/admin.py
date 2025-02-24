@@ -52,7 +52,7 @@ class PlayerAdmin(ImportExportModelAdmin):
         "telegram_id", "insert_dt", "telegram_username", "first_name", "last_name", "telegram_language_code",
         "auth_token", "referral_code", "available_slots", "wallet_address", "wallet_insert_dt")
     search_fields = ("telegram_id", "telegram_username")
-    list_filter = ("is_active", ConnectWalletFilter, OpenWebAppFilter)
+    list_filter = ("is_active", ConnectWalletFilter, OpenWebAppFilter, "telegram_language_code")
     fieldsets = (
         (None,
          {'fields': (
