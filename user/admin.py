@@ -5,7 +5,7 @@ from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
 from import_export.admin import ImportExportModelAdmin
 
-from user.models import CountDown
+from user.models import CountDown, Slot
 from user.resource import *
 
 
@@ -74,6 +74,13 @@ class PlayerAdmin(ImportExportModelAdmin):
             player = Player.objects.get(telegram_id=referrer_id)
             player.available_slots.number = referral_count + 1
             player.available_slots.save()
+
+
+@admin.register(Slot)
+class SlotAdmin(ImportExportModelAdmin):
+    list_display = ["player", "countdown", "number"]
+    list_filter = ["number", "countdown"]
+    search_fields = ["player__telegram_id", "player__telegram_username"]
 
 
 @admin.register(Prediction)
