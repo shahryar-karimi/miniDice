@@ -5,6 +5,8 @@ from datetime import datetime, timedelta
 from sqlalchemy import create_engine, Column, Integer, String, DateTime, ForeignKey
 from sqlalchemy.orm import sessionmaker, relationship, declarative_base
 from sqlalchemy import func
+import plotly.graph_objects as go
+
 
 
 # Set up the environment variables
@@ -129,19 +131,38 @@ def fetch_analyzed_data_grouped_by_date(df_players, df_predictions, df_referrals
     df_analyzed_data = df_analyzed_data.join(df_predictions_grouped_wins.set_index('insert_d'), on='insert_d')
     df_analyzed_data = df_analyzed_data.join(df_players_joined_grouped.set_index('insert_d'), on='insert_d')
 
-    total_row = {'insert_d': 'Total'}
-    for column in df_analyzed_data.columns:
-        if column == 'insert_d':
-            continue
-        try:
-            total_row[column] = df_analyzed_data[column].sum()
-        except:
-            total_row[column] = '-'
+    df_analyzed_data['count_referrals'] = df_analyzed_data['count_referrals'].fillna(0)
+    df_analyzed_data['joined_without_referral'] = df_analyzed_data['joined_players_count'] - df_analyzed_data['count_referrals']
+    
+    
+    def get_joined_without_referrals_who_connected_wallet(players, referrals):
+        players = players.loc[players['wallet_address'].notna()]
+        referred_players = referrals['referee_id'].values
+        players = players.loc[~players['telegram_id'].isin(referred_players)]
+        players_grouped = players.groupby('insert_d').size().reset_index(name='count_joined_player_noref_wallet')
+        return players_grouped
+    
+    df_joined_player_noref_wallet = get_joined_without_referrals_who_connected_wallet(df_players, df_referrals)
+    df_analyzed_data = df_analyzed_data.join(df_joined_player_noref_wallet.set_index('insert_d'), on='insert_d')
+    
+    
+    
+    def add_total_row(df):
+        total_row = {'insert_d': 'Total'}
+        for column in df.columns:
+            if column == 'insert_d':
+                continue
+            try:
+                total_row[column] = df[column].sum()
+            except:
+                total_row[column] = '-'
 
-    df_analyzed_data.loc[len(df_analyzed_data)] = total_row
+        df.loc[len(df)] = total_row
+        return df
+    
+    df_analyzed_data = add_total_row(df_analyzed_data)
     
     return df_analyzed_data
-
 
 
 def fetch_winners_grouped_by_date():
@@ -226,6 +247,7 @@ def referrer_giveaway(referrals_prev_day):
         
         
 # Assuming df_analyzed_data is your DataFrame
+
 def plot_graphs(df_analyzed_data):
     # Ensure 'insert_d' is a datetime object for filtering
     df_analyzed_data['insert_d'] = pd.to_datetime(df_analyzed_data['insert_d'], errors='coerce')
@@ -246,24 +268,44 @@ def plot_graphs(df_analyzed_data):
     filtered_data = df_analyzed_data[(df_analyzed_data['insert_d'] >= pd.to_datetime(start_date)) & (df_analyzed_data['insert_d'] <= pd.to_datetime(end_date))]
     filtered_data.loc[:, 'insert_d'] = filtered_data['insert_d'].dt.date  # Ensure the date is just in the date format
 
-    # Loop through each column for plotting
-    
-    def fix_title(text):
-        return str(text).split()[0]
-    
-    for column in df_analyzed_data.columns:
-        if column == 'insert_d':
-            continue  # Skip the date column, we already plot it on the x-axis
-        
-        try:
-            # Prepare the data for the line chart
-            chart_data = filtered_data[['insert_d', column]]
-            chart_data.set_index('insert_d', inplace=True)  # Set 'insert_d' as index
+    # Create checkboxes for column selection
+    selected_columns = st.multiselect(
+        "Select Columns to Plot",
+        options=[col for col in df_analyzed_data.columns if col != 'insert_d'],  # Exclude 'insert_d' from options
+        default=[col for col in df_analyzed_data.columns if col != 'insert_d']  # Default to all columns except 'insert_d'
+    )
 
-            st.subheader(f"{column} from {fix_title(start_date)} to {fix_title(end_date)}")
-            st.line_chart(chart_data)  # Plot the line chart
-        except Exception as e:
-            st.write(f"Error plotting {column}: {e}")
+    # Plot using Plotly if any columns are selected
+    if selected_columns:
+        # Create a Plotly figure
+        fig = go.Figure()
+
+        # Loop through selected columns to plot each one
+        for column in selected_columns:
+            try:
+                chart_data = filtered_data[['insert_d', column]]
+                fig.add_trace(go.Scatter(
+                    x=chart_data['insert_d'],
+                    y=chart_data[column],
+                    mode='lines',
+                    name=column
+                ))
+            except Exception as e:
+                st.write(f"Error plotting {column}: {e}")
+        
+        # Update layout for better visualization
+        fig.update_layout(
+            title=f"Selected Columns from {start_date} to {end_date}",
+            xaxis_title="Date",
+            yaxis_title="Value",
+            template="plotly_dark",  # Optional, change the theme
+            showlegend=True
+        )
+
+        # Display the Plotly figure
+        st.plotly_chart(fig)
+    else:
+        st.write("Please select at least one column to plot.")
 
 # Extract Wallet Information Function
 def extract_wallet_information(df_players, df_predictions, df_referrals, df_winners_grouped):
