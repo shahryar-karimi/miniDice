@@ -20,5 +20,4 @@ def token_expire_dt_generator():
 
 
 def calculate_player_point(wallet, win, prediction, referral_count, mini_app):
-    # TODO add math function
-    return wallet + win + prediction + referral_count + mini_app
+    return 5 + 10 * mini_app + 500 * wallet + 50 * win + prediction + 5 * referral_count
