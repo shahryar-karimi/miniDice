@@ -57,6 +57,3 @@ def get_balance(wallet_address):
         return wallet
     
 
-
-wallet = 'UQBwHP7QWC45YmO-6Rzj_pXGy7KavYgAkiPO5Qy2ZrKdSJ_D'
-print(get_balance(wallet))
