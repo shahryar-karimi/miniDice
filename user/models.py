@@ -43,7 +43,7 @@ class Player(AbstractModel):
     def point(self):
         wallet = self.wallet_address is not None
         win = self.predictions.filter(is_win=True).count()
-        prediction = self.predictions.distinct("countdown").count()
+        prediction = self.predictions.count()
         referral_count = self.get_referrals().count()
         mini_app = self.auth_token is not None
         return calculate_player_point(wallet, win, prediction, referral_count, mini_app)

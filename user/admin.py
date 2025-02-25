@@ -1,6 +1,6 @@
 from django.contrib import admin
 from django.contrib.admin import DateFieldListFilter
-from django.db.models import Count
+from django.db.models import F, Count, IntegerField, Case, When, Value
 from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
 from import_export.admin import ImportExportModelAdmin
@@ -62,6 +62,39 @@ class PlayerAdmin(ImportExportModelAdmin):
     ordering = ('telegram_id',)
     date_hierarchy = 'wallet_insert_dt'
     actions = ['sync_referrals']
+
+    def point(self, obj):
+        return obj.point
+
+    point.admin_order_field = 'point_value'
+
+    def get_queryset(self, request):
+        queryset = super().get_queryset(request)
+        queryset = queryset.annotate(
+            wallet=Case(
+                When(wallet_address__isnull=False, then=Value(1)),
+                default=Value(0),
+                output_field=IntegerField()
+            ),
+            win=Count('predictions', filter=F('predictions__is_win'), distinct=True),
+            prediction=Count('predictions'),
+            referral_count=Count('referrals', distinct=True),
+            mini_app=Case(
+                When(auth_token__isnull=False, then=Value(1)),
+                default=Value(0),
+                output_field=IntegerField()
+            )
+        ).annotate(
+            point_value=(
+                    5 +
+                    (10 * F('mini_app')) +
+                    (500 * F('wallet')) +
+                    (50 * F('win')) +
+                    F('prediction') +
+                    (5 * F('referral_count'))
+            )
+        )
+        return queryset
 
     def sync_referrals(self, request, queryset):
         today = timezone.make_aware(timezone.datetime.combine(timezone.datetime.today(), timezone.datetime.min.time()))
