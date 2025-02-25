@@ -50,7 +50,7 @@ class PlayerAdmin(ImportExportModelAdmin):
     resource_class = PlayerResource
     list_display = (
         "telegram_id", "insert_dt", "telegram_username", "first_name", "last_name", "telegram_language_code",
-        "auth_token", "referral_code", "available_slots", "wallet_address", "wallet_insert_dt", "point")
+        "auth_token", "referral_code", "available_slots", "wallet_address", "wallet_insert_dt", "point_value")
     search_fields = ("telegram_id", "telegram_username")
     list_filter = ("is_active", ConnectWalletFilter, OpenWebAppFilter, "telegram_language_code")
     fieldsets = (
@@ -63,10 +63,10 @@ class PlayerAdmin(ImportExportModelAdmin):
     date_hierarchy = 'wallet_insert_dt'
     actions = ['sync_referrals']
 
-    def point(self, obj):
-        return obj.point
+    def point_value(self, obj):
+        return obj.point_value
 
-    point.admin_order_field = 'point_value'
+    point_value.admin_order_field = 'point_value'
 
     def get_queryset(self, request):
         queryset = super().get_queryset(request)
