@@ -76,8 +76,8 @@ class PlayerAdmin(ImportExportModelAdmin):
                 default=Value(0),
                 output_field=IntegerField()
             ),
-            win=Count('predictions', filter=F('predictions__is_win')),
-            prediction=Count('predictions'),
+            win=Count('predictions', filter=F('predictions__is_win'), distinct=True),
+            prediction=Count('predictions', distinct=True),
             referral_count=Count('refers', distinct=True),
             mini_app=Case(
                 When(auth_token__isnull=False, then=Value(1)),
