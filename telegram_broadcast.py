@@ -1,8 +1,10 @@
 import asyncio
 import os
+from datetime import timedelta
 
 import django
 from asgiref.sync import sync_to_async
+from django.utils import timezone
 
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'miniDice.settings')
 django.setup()
@@ -10,20 +12,13 @@ from user.models import Player
 from django.conf import settings
 from telegram import Bot
 
-from django.db.models import Count
 
-
-# Asynchronously fetch players who have at least one prediction
 async def get_players():
-    """Fetch players with at least one prediction asynchronously using Django's ORM in a thread-safe way"""
-    # Use Django ORM to filter players that have at least one related prediction
-    players_with_at_least_one_prediction = await sync_to_async(list)(
-        Player.objects.annotate(prediction_count=Count('predictions'))  # Annotate player with the count of predictions
-        .filter(prediction_count__gt=0)  # Only players with at least one prediction
-        .order_by('telegram_id')
+    three_days_ago_midnight = (timezone.now() - timedelta(days=3)).replace(hour=0, minute=0, second=0, microsecond=0)
+    selected_players = await sync_to_async(list)(
+        Player.objects.filter(referrals__insert_dt__gt=three_days_ago_midnight)
     )
-
-    return players_with_at_least_one_prediction
+    return selected_players
 
 
 async def get_all_players():
@@ -39,19 +34,20 @@ async def get_russian():
 
 
 async def broadcast_message():
-    """Send message to all stored chat IDs"""
     bot = Bot(token=settings.TELEGRAM_BOT_TOKEN)
-    players = await get_russian()
+    players = await get_players()
     for player in players:
         try:
-            message = f"""🚀Что-то захватывающее скоро появится в вашем кошельке! 💰✨
+            message = f"""🎉Hello, NEW Dice Maniacs Citizen! 🎲
 
-Вы один из первых, кто станет частью чего-то грандиозного, что вот-вот произойдёт в мире кубиков! 🎲
+You’ve joined through a recommendation, and we’ve got AMAZING things waiting for you in Dice Land! 🌍✨
 
-Если вы ещё не подключили свой кошелёк, самое время сделать это!
+🚨$20 Retention Bonus and $30 Referral Bonus are just the beginning! And don’t forget about the $100 prize every night! 💰🔥
 
-🔗Подключите кошелёк СЕЙЧАС, пока не стало слишком поздно!⏳"""
-            await bot.send_photo(chat_id=player.telegram_id, photo="./data/media/flying-to-dice-land.jpg",
+Connect your wallet to start your adventure and claim your rewards! 🔗🚀
+
+Come back and join the fun—the experience is just starting! 🎉🎲"""
+            await bot.send_photo(chat_id=player.telegram_id, photo="./data/media/5904615795118425431.jpg",
                                  caption=message)
             # await bot.send_video(chat_id=player.telegram_id, video="./data/media/Trump_meme.MOV", caption=message)
         except Exception as e:
