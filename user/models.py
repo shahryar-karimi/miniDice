@@ -136,7 +136,7 @@ class Prediction(AbstractModel):
 
 
 class Referral(AbstractModel):
-    referrer = models.ForeignKey(Player, on_delete=models.CASCADE, unique=False)
+    referrer = models.ForeignKey(Player, on_delete=models.CASCADE, unique=False, related_name='refers')
     referee = models.OneToOneField(Player, related_name="referrals", null=True, blank=True, on_delete=models.SET_NULL,
                                    unique=False)
 
