@@ -543,15 +543,11 @@ def main():
             st.rerun()
         
     else:
-        st.write("Welcome! You have access to this page.")
 
         # Fetch data from the database only when needed
         df_players = pd.read_sql(session.query(Player).statement, session.bind)
         df_predictions = pd.read_sql(session.query(Prediction).statement, session.bind)
         df_referrals = pd.read_sql(session.query(UserReferral).statement, session.bind)
-
-        st.write(df_players)
-        st.write(df_predictions)
         
         st.markdown('---')        
         with st.expander("Data Sheets"):
