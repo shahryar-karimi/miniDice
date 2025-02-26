@@ -6,6 +6,7 @@ from sqlalchemy import create_engine, Column, Integer, String, DateTime, Foreign
 from sqlalchemy.orm import sessionmaker, relationship, declarative_base
 from sqlalchemy import func
 import plotly.graph_objects as go
+import sympy as sp
 
 
 
