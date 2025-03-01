@@ -116,9 +116,14 @@ def fetch_analyzed_data_grouped_by_date(df_players, df_predictions, df_referrals
     df_players_grouped.columns = ['insert_d', 'count']
 
     df_referrals['insert_d'] = df_referrals['insert_dt'].apply(lambda x: str(x).split()[0])
+    df_referrals_wallet_connected = df_referrals.loc[df_referrals['referee_id'].isin(df_players['telegram_id'].values.loc[df_players['wallet_address'].notna()])]
+    
     df_referrals_grouped = df_referrals.groupby(by='insert_d').size().reset_index()
+    df_referrals_wallet_connected_grouped = df_referrals_wallet_connected.groupby(by='insert_d').size().reset_index()
+    df_referrals_grouped = pd.merge(df_referrals_grouped, df_referrals_wallet_connected_grouped, on='insert_d', how='left')
+    df_referrals_grouped = df_referrals_grouped.fillna(0)
     df_referrals_grouped = pd.DataFrame(df_referrals_grouped)
-    df_referrals_grouped.columns = ['insert_d', 'count']
+    df_referrals_grouped.columns = ['insert_d', 'count', 'count_wallet_connected']
 
     df_predictions['insert_d'] = df_predictions['insert_dt'].apply(lambda x: str(x).split()[0])
     df_predictions_grouped_wins = df_predictions.groupby(by= 'insert_d').agg(is_win=('is_win', 'sum'),
