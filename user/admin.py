@@ -179,7 +179,7 @@ class CountDownAdmin(admin.ModelAdmin):
 @admin.register(Referral)
 class ReferralAdmin(ImportExportModelAdmin):
     resource_class = ReferralResource
-    list_display = ("referrer", "referee", "insert_dt")
+    list_display = ("referrer", "referee", "insert_dt", "referee_wallet")
     fieldsets = (
         (None,
          {'fields': ("referrer", "referee")},),
@@ -188,3 +188,7 @@ class ReferralAdmin(ImportExportModelAdmin):
                      'referrer__last_name']
     list_filter = [('insert_dt', DateFieldListFilter)]
     date_hierarchy = 'insert_dt'
+
+    @admin.display(description='referee wallet')
+    def referee_wallet(self, obj: Referral):
+        return obj.referee.wallet_address
