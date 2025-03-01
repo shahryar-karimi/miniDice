@@ -6,6 +6,7 @@ from sqlalchemy import create_engine, Column, Integer, String, DateTime, Foreign
 from sqlalchemy.orm import sessionmaker, relationship, declarative_base
 from sqlalchemy import func
 import plotly.graph_objects as go
+import sympy as sp
 
 
 
@@ -165,6 +166,7 @@ def fetch_analyzed_data_grouped_by_date(df_players, df_predictions, df_referrals
     return df_analyzed_data
 
 
+
 def fetch_winners_grouped_by_date():
     # Querying winners (where is_win == 1)
     winners = session.query(Prediction).filter(Prediction.is_win == True).all()
@@ -248,6 +250,23 @@ def referrer_giveaway(referrals_prev_day):
         
 # Assuming df_analyzed_data is your DataFrame
 
+def create_math_function(expression, variables):
+    # Create symbolic variables
+    sym_vars = {var: sp.symbols(var) for var in variables}
+
+    # Replace $var$ with the symbolic variable
+    for var in variables:
+        expression = expression.replace(f'${var}$', str(sym_vars[var]))
+
+    # Parse the expression into a symbolic expression
+    sym_expr = sp.sympify(expression)
+
+    # Create a lambda function from the symbolic expression
+    func = sp.lambdify(list(sym_vars.values()), sym_expr, 'numpy')
+
+    return func
+
+
 def plot_graphs(df_analyzed_data):
     # Ensure 'insert_d' is a datetime object for filtering
     df_analyzed_data['insert_d'] = pd.to_datetime(df_analyzed_data['insert_d'], errors='coerce')
@@ -268,34 +287,128 @@ def plot_graphs(df_analyzed_data):
     filtered_data = df_analyzed_data[(df_analyzed_data['insert_d'] >= pd.to_datetime(start_date)) & (df_analyzed_data['insert_d'] <= pd.to_datetime(end_date))]
     filtered_data.loc[:, 'insert_d'] = filtered_data['insert_d'].dt.date  # Ensure the date is just in the date format
 
-    # Create checkboxes for column selection
-    selected_columns = st.multiselect(
-        "Select Columns to Plot",
-        options=[col for col in df_analyzed_data.columns if col != 'insert_d'],  # Exclude 'insert_d' from options
-        default=[col for col in df_analyzed_data.columns if col != 'insert_d']  # Default to all columns except 'insert_d'
-    )
+    # for column selection and expression building
+    st.header("Expression Builder")
 
-    # Plot using Plotly if any columns are selected
-    if selected_columns:
+    # Get column names (excluding 'insert_d') and replace underscores for display
+    columns = [col for col in df_analyzed_data.columns if col != 'insert_d']
+    operations = ['+', '-', '*', '/']
+
+    
+    if 'expr' not in st.session_state:
+        st.session_state.expr = ''
+        
+    if 'isVar' not in st.session_state:
+        st.session_state.isVar = True
+        
+    if 'canSave' not in st.session_state:
+        st.session_state.canSave = False
+
+    # Add selected column to the expression
+    expr = st.session_state.expr
+    st.code(f"Your Expression: {expr}", language="markdown")
+
+
+    if st.session_state.isVar:
+        for column in columns:
+            display = column.replace('_', '\,')
+            if st.button(f"${display}$", key = f'add_{column}'):
+                st.session_state.expr += f'${column}$'
+                st.session_state.isVar = False
+                st.session_state.canSave = True
+                st.rerun()
+
+    else:
+        for opr in operations:
+            if st.button(f"${opr}$", key = f'add_{opr}'):
+                st.session_state.expr += f'{opr}'
+                st.session_state.isVar = True
+                st.session_state.canSave = False
+                st.rerun()
+            
+
+    # Save expressions as static variables
+    if 'expressions' not in st.session_state:
+        st.session_state.expressions = []
+
+    def reset():
+        st.session_state.expr = ''
+        st.session_state.isVar = True
+        st.session_state.canSave = False
+        st.rerun()
+
+    
+    if st.session_state.expr != '':
+        if st.button('Clear Expression', type="secondary"):
+            reset()
+    
+    if st.session_state.canSave:
+        if st.button("Save Expression", type="primary"):
+            if expr.strip():
+                st.session_state.expressions.append(expr)
+                dist_expr = expr.replace('_', '\,')
+                st.success(f"Expression '{dist_expr}' saved!")
+                reset()
+            else:
+                st.error("Please enter a valid expression.")
+                st.session_state.expr = ''
+
+    # Display and manage saved expressions
+    st.header("Saved Expressions")
+    for i, expr in enumerate(st.session_state.expressions):
+        disp_expr = expr.replace('_', '\,')
+        if st.button(f"Delete: {disp_expr}", key=f"delete_{i}"):
+            st.session_state.expressions.pop(i)
+            st.rerun()
+
+    # Plotting
+    if st.session_state.expressions:
         # Create a Plotly figure
         fig = go.Figure()
 
-        # Loop through selected columns to plot each one
-        for column in selected_columns:
+        # Loop through saved expressions and plot them
+        for expr in st.session_state.expressions:
             try:
-                chart_data = filtered_data[['insert_d', column]]
+                # Extract variables from the expression
+                variables = set()
+                start = 0
+                while True:
+                    start = expr.find('$', start)
+                    if start == -1:
+                        break
+                    end = expr.find('$', start + 1)
+                    if end == -1:
+                        raise ValueError("Unmatched $ in expression")
+                    var_name = expr[start + 1:end]
+                    variables.add(var_name)
+                    start = end + 1
+
+                # Create the math function
+                math_func = create_math_function(expr, variables)
+
+                # Calculate the expression values
+                result = []
+                for _, row in filtered_data.iterrows():
+                    args = [row[var] for var in variables]
+                    result.append(math_func(*args))
+
+                # Add the trace to the plot
                 fig.add_trace(go.Scatter(
-                    x=chart_data['insert_d'],
-                    y=chart_data[column],
+                    x=filtered_data['insert_d'],
+                    y=result,
                     mode='lines',
-                    name=column
+                    name=expr
                 ))
             except Exception as e:
-                st.write(f"Error plotting {column}: {e}")
-        
+                st.error(f"Error evaluating expression '{expr}': {e}")
+
         # Update layout for better visualization
+        def fix_date(dt):
+            dt = str(dt).split()[0]
+            return dt
+        
         fig.update_layout(
-            title=f"Selected Columns from {start_date} to {end_date}",
+            title=f"Plotted Expressions from {fix_date(start_date)} to {fix_date(end_date)}",
             xaxis_title="Date",
             yaxis_title="Value",
             template="plotly_dark",  # Optional, change the theme
@@ -305,8 +418,7 @@ def plot_graphs(df_analyzed_data):
         # Display the Plotly figure
         st.plotly_chart(fig)
     else:
-        st.write("Please select at least one column to plot.")
-
+        st.write("No expressions saved yet. Please build and save an expression.")
 # Extract Wallet Information Function
 def extract_wallet_information(df_players, df_predictions, df_referrals, df_winners_grouped):
     
@@ -417,20 +529,27 @@ def extract_player_information(df_players, df_predictions, df_referrals, df_winn
         except ValueError:
             st.write('ID must be a number')
             
-                
-                
+
+
 def main():
     # Create a password input box
-    password = st.text_input("Enter the password", type="password")
-    # password = STREAMLIT_PASSWORD
-    if password == STREAMLIT_PASSWORD:
-        st.write("Welcome! You have access to this page.")
+    
+    if 'auth' not in st.session_state:
+        st.session_state.auth = False
+    
+    if not st.session_state.auth:
+        password = st.text_input("Enter the password", type="password")
+        if password == STREAMLIT_PASSWORD:
+            st.session_state.auth = True
+            st.rerun()
+        
+    else:
 
         # Fetch data from the database only when needed
         df_players = pd.read_sql(session.query(Player).statement, session.bind)
         df_predictions = pd.read_sql(session.query(Prediction).statement, session.bind)
         df_referrals = pd.read_sql(session.query(UserReferral).statement, session.bind)
-
+        
         st.markdown('---')        
         with st.expander("Data Sheets"):
             
@@ -468,7 +587,8 @@ def main():
         st.markdown('---')
         with st.expander('Extract Player Information'):
             extract_player_information(df_players, df_predictions, df_referrals, df_winners_grouped)
-
+        
+            
 
 if __name__ == "__main__":
     main()

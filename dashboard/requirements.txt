@@ -2,3 +2,4 @@ streamlit==1.41.1
 pandas==2.2.3
 sqlalchemy==2.0.38
 plotly==6.0.0
+sympy==1.13.3
