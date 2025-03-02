@@ -47,6 +47,7 @@ INSTALLED_APPS = [
     "rest_framework",
     'telegramBot.apps.TelegrambotConfig',
     'import_export',
+    'asset.apps.AssetConfig'
 ]
 
 MIDDLEWARE = [
