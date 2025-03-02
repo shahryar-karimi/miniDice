@@ -6,6 +6,8 @@ from sqlalchemy import create_engine, Column, Integer, String, DateTime, Foreign
 from sqlalchemy.orm import sessionmaker, relationship, declarative_base
 import plotly.graph_objects as go
 import sympy as sp
+from langchain_openai import ChatOpenAI
+import random
 
 
 # Set up the environment variables
@@ -15,6 +17,9 @@ user = os.getenv("POSTGRES_USER")
 db_password = os.getenv("POSTGRES_PASSWORD")
 port = os.getenv("POSTGRES_PORT")
 STREAMLIT_PASSWORD = os.getenv("STREAMLIT_PASSWORD")
+API_KEY = os.getenv("API_KEY")
+llm = ChatOpenAI(model="gpt-4o", api_key=API_KEY, temperature=0.3)
+
 
 # Define the base for the ORM
 Base = declarative_base()
@@ -76,8 +81,6 @@ def fetch_data_for_previous_day():
     return players_prev_day, referrals_prev_day
 
 # Fetch analyzed data grouped by date
-from sqlalchemy import case
-
 def fetch_analyzed_data_grouped_by_date():
     # Query for players joined grouped by date
     players_joined_query = session.query(
@@ -141,7 +144,7 @@ def fetch_analyzed_data_grouped_by_date():
 
     # Calculate joined without referral
     df_analyzed_data['joined_without_referral'] = df_analyzed_data['joined_players_count'] - df_analyzed_data['count_referrals']
-    df_analyzed_data = df_analyzed_data.sort_values(by='insert_d')
+    df_analyzed_data = df_analyzed_data.sort_values(by='insert_d').reset_index(drop=True)
     # Add a total row
     def add_total_row(df):
         total_row = {'insert_d': 'Total'}
@@ -226,11 +229,6 @@ def create_math_function(expression, variables):
 
     return func
 
-
-import pandas as pd
-import plotly.graph_objects as go
-import streamlit as st
-from datetime import datetime
 
 def plot_graphs(df_analyzed_data):
     # Ensure 'insert_d' is a datetime object for filtering
@@ -531,7 +529,92 @@ def extract_player_information():
         except ValueError:
             st.write("❌ ID must be a number.")
                       
-                    
+
+# Function to fetch eligible players based on conditions
+def fetch_eligible_players(min_predictions, min_wins, min_referrals):
+    query = session.query(
+        Player.telegram_id,
+        Player.telegram_username,
+        Player.first_name,
+        Player.wallet_address,
+        func.count(Prediction.id).label('total_predictions'),
+        func.sum(case((Prediction.is_win.is_(True), 1), else_=0)).label('total_wins'),  # FIXED CAST
+        func.count(UserReferral.id).label('total_referrals')
+    ).outerjoin(Prediction, Player.telegram_id == Prediction.player_id) \
+     .outerjoin(UserReferral, Player.telegram_id == UserReferral.referrer_id) \
+     .filter(Prediction.is_active.is_(True)).group_by(Player.telegram_id).having(
+        func.count(Prediction.id) >= min_predictions,
+        func.sum(case((Prediction.is_win.is_(True), 1), else_=0)) >= min_wins,  # FIXED BOOLEAN CAST
+        func.count(UserReferral.id) >= min_referrals
+    ).all()
+    
+    return query
+
+# Function to generate success story using LangChain
+def generate_success_story(player, game_description, instruction):
+    prompt = f"""
+    Write an engaging success story about a player in the game '{game_description}'.
+
+    Player details:
+    - Username: {player['telegram_username']}
+    - First Name: {player['first_name']}
+    - Total Predictions: {player['total_predictions']}
+    - Total Wins: {player['total_wins']}
+    - Total Referrals: {player['total_referrals']}
+
+    Make the story motivational and inspiring for other players.
+    """
+
+    history = [
+        {"role": "system", "content": instruction}
+    ]
+    history.append({"role": "user", "content": prompt})
+    response = llm.invoke(history)
+    return response.content
+
+def success_story():
+    st.markdown("Use this tool to create a motivational success story for a player!")
+
+    # Input fields for filtering criteria
+    min_predictions = st.number_input("Minimum Active Predictions", min_value=0, value=5)
+    min_wins = st.number_input("Minimum Wins", min_value=0, value=1)
+    min_referrals = st.number_input("Minimum Referrals", min_value=0, value=1)
+
+    # Input field for game explanation to ChatGPT
+    game_description = st.text_area("Describe Your Game for ChatGPT", "A thrilling dice prediction game with exciting rewards!")
+
+    instruction = st.text_area("Insert Your Instructions for ChatGPT", """I want you to act as a game copywriter for Dice Maniacs. Your role is to craft electrifying, high-converting, and community-driven content that keeps players engaged, excited, and coming back for more. Your writing should be sharp, persuasive, and action-packed, using a mix of FOMO (Fear of Missing Out), psychological triggers, and strategic formatting to drive engagement.
+    Your responsibilities include:
+    • FOMO-Driven Announcements – Hype up upcoming dice rolls, limited-time events, and last-chance opportunities with bold, high-energy messaging.
+    • Winner Updates – Celebrate winners with dynamic posts that showcase their success while motivating others to participate.
+    • Referral Promotions – Encourage players to bring in friends by making the referral rewards irresistible and easy to understand.
+    • Daily Dice Roll Reminders – Use urgency and excitement to remind players to place their predictions before time runs out.
+    • Interactive Polls – Craft engaging poll questions that spark curiosity and discussion in the community.
+    • Compelling CTAs – Drive action with short, punchy, and impactful calls to action that make players feel like they must participate now.
+
+    Your tone should be conversational, energetic, and immersive—like a game host keeping the crowd on their toes. Keep your language concise, bold, and full of momentum. Use emojis strategically to enhance readability, and make every post feel like an event.
+
+    """)
+    
+    # Submit button
+    if st.button("🎲 Generate Success Story"):
+        eligible_players = fetch_eligible_players(min_predictions, min_wins, min_referrals)
+
+        if not eligible_players:
+            st.warning("No players meet the selected criteria. Try adjusting the values.")
+        else:
+            # Convert result to dictionary and randomly pick a player
+            selected_player = random.choice(eligible_players)._asdict()
+
+            # Generate a success story
+            success_story = generate_success_story(selected_player, game_description, instruction)
+
+            # Display the generated story
+            st.subheader("✨ Success Story")
+            st.write(success_story)
+
+
+
 def main():
     if 'auth' not in st.session_state:
         st.session_state.auth = False
@@ -552,7 +635,7 @@ def main():
         # Display data
         with st.expander("📄 Data Sheets"):
             st.write("📋 Analyzed Data")
-            st.dataframe(df_analyzed_data)
+            st.dataframe(df_analyzed_data.iloc[::-1])
             st.write("🏆 Winners Data")
             st.dataframe(df_winners_grouped)
 
@@ -570,6 +653,8 @@ def main():
             
         with st.expander("👨🏻‍💼 Extract Player Information"):
             extract_player_information()
+        with st.expander("🎉 Generate a Player Success Story"):
+            success_story()
 
 if __name__ == "__main__":
     main()
