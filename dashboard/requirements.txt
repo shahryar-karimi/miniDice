@@ -3,4 +3,3 @@ pandas==2.2.3
 sqlalchemy==2.0.38
 plotly==6.0.0
 sympy==1.13.3
-langchain_openai==0.1.25
