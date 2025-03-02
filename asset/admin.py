@@ -15,7 +15,6 @@ class AssetAdmin(admin.ModelAdmin):
     def sync_assets(self, request, queryset):
         players = Player.objects.filter(wallet_address__isnull=False)
         for player in players:
-            time.sleep(2)
             assets = {}
             for i in range(10):
                 try:
@@ -23,7 +22,6 @@ class AssetAdmin(admin.ModelAdmin):
                     break
                 except Exception as e:
                     print(e)
-                    time.sleep(2)
             for asset, value in assets.items():
                 create_asset, is_created = Asset.objects.get_or_create(symbol=asset, player=player)
                 create_asset.balance = value.get("balance")

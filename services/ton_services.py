@@ -1,3 +1,5 @@
+import time
+
 import requests
 
 
@@ -45,7 +47,9 @@ def _get_jettons(wallet_address):
 
 
 def get_balance(wallet_address):
+    time.sleep(2)
     ton = _get_ton_balance(wallet_address)
+    time.sleep(2)
     jettons = _get_jettons(wallet_address)
     if ton is None or jettons is None:
         return None
