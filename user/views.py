@@ -374,3 +374,16 @@ class PredictionsAPI(APIView):
         predictions = player.predictions.order_by("-insert_dt")
         serializer = PredictionHistoryRowSerializer(predictions, many=True)
         return Response(serializer.data, status=status.HTTP_200_OK)
+
+
+class LeaderboardAPI(APIView):
+    @swagger_auto_schema(
+        operation_summary="Prediction history",
+        operation_description="Gets all predictions of a player .",
+        responses={status.HTTP_200_OK: LeaderboardSerializer()},
+        tags=["Leaderboard"]
+    )
+    def get(self, request):
+        serializer = LeaderboardSerializer(data={})
+        serializer.is_valid(raise_exception=True)
+        return Response(serializer.data, status=status.HTTP_200_OK)

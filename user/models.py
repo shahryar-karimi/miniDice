@@ -7,6 +7,7 @@ from django.utils import timezone
 from django.utils.functional import cached_property
 from django_autoutils.model_utils import AbstractModel
 
+from django.db.models import F, Count, IntegerField, Case, When, Value
 from utils.server_utils import calculate_player_point
 
 
@@ -47,6 +48,33 @@ class Player(AbstractModel):
         referral_count = self.get_referrals().count()
         mini_app = self.auth_token is not None
         return calculate_player_point(wallet, win, prediction, referral_count, mini_app)
+
+    @staticmethod
+    def players_with_point_value(queryset):
+        return queryset.annotate(
+            wallet=Case(
+                When(wallet_address__isnull=False, then=Value(1)),
+                default=Value(0),
+                output_field=IntegerField()
+            ),
+            win=Count('predictions', filter=F('predictions__is_win'), distinct=True),
+            prediction=Count('predictions', distinct=True),
+            referral_count=Count('refers', distinct=True),
+            mini_app=Case(
+                When(auth_token__isnull=False, then=Value(1)),
+                default=Value(0),
+                output_field=IntegerField()
+            )
+        ).annotate(
+            point_value=(
+                    5 +
+                    (10 * F('mini_app')) +
+                    (500 * F('wallet')) +
+                    (50 * F('win')) +
+                    F('prediction') +
+                    (5 * F('referral_count'))
+            )
+        )
 
     def telegram_login(self):
         self.auth_token = self.telegram_id

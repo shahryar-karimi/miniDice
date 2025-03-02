@@ -123,3 +123,18 @@ class MissionCheckboxSerializer(serializers.Serializer):
     def get_has_submit(self, obj: Player):
         countdown = CountDown.get_active_countdown()
         return obj.predictions.filter(countdown=countdown, is_active=True).exists()
+
+
+class LeaderboardRowSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Player
+        fields = ["telegram_username", "first_name", "point"]
+
+
+class LeaderboardSerializer(serializers.Serializer):
+    players = serializers.SerializerMethodField()
+
+    def get_players(self, obj):
+        queryset = Player.objects.all()
+        players = Player.players_with_point_value(queryset).order_by("-point_value")[:100]
+        return LeaderboardRowSerializer(players, many=True).data

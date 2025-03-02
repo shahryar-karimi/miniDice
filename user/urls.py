@@ -14,4 +14,5 @@ urlpatterns = [
     path('referral-code/', ReferralCodeAPI.as_view(), name='referral-code'),
     path('referrals/', ReferralsAPI.as_view(), name='referrals'),
     path('missions/', MissionsCheckboxAPI.as_view(), name='missions'),
+    path('leaderboard/', LeaderboardAPI.as_view(), name='leaderboard'),
 ]

@@ -70,31 +70,7 @@ class PlayerAdmin(ImportExportModelAdmin):
 
     def get_queryset(self, request):
         queryset = super().get_queryset(request)
-        queryset = queryset.annotate(
-            wallet=Case(
-                When(wallet_address__isnull=False, then=Value(1)),
-                default=Value(0),
-                output_field=IntegerField()
-            ),
-            win=Count('predictions', filter=F('predictions__is_win'), distinct=True),
-            prediction=Count('predictions', distinct=True),
-            referral_count=Count('refers', distinct=True),
-            mini_app=Case(
-                When(auth_token__isnull=False, then=Value(1)),
-                default=Value(0),
-                output_field=IntegerField()
-            )
-        ).annotate(
-            point_value=(
-                    5 +
-                    (10 * F('mini_app')) +
-                    (500 * F('wallet')) +
-                    (50 * F('win')) +
-                    F('prediction') +
-                    (5 * F('referral_count'))
-            )
-        )
-        return queryset
+        return Player.players_with_point_value(queryset)
 
     def sync_referrals(self, request, queryset):
         today = timezone.make_aware(timezone.datetime.combine(timezone.datetime.today(), timezone.datetime.min.time()))
