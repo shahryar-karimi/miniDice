@@ -1,11 +1,11 @@
 from django.contrib import admin
 from django.contrib.admin import DateFieldListFilter
-from django.db.models import Count
+from django.db.models import F, Count, IntegerField, Case, When, Value
 from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
 from import_export.admin import ImportExportModelAdmin
 
-from user.models import CountDown
+from user.models import CountDown, Slot
 from user.resource import *
 
 
@@ -50,9 +50,9 @@ class PlayerAdmin(ImportExportModelAdmin):
     resource_class = PlayerResource
     list_display = (
         "telegram_id", "insert_dt", "telegram_username", "first_name", "last_name", "telegram_language_code",
-        "auth_token", "referral_code", "available_slots", "wallet_address", "wallet_insert_dt")
+        "auth_token", "referral_code", "available_slots", "wallet_address", "wallet_insert_dt", "point_value")
     search_fields = ("telegram_id", "telegram_username")
-    list_filter = ("is_active", ConnectWalletFilter, OpenWebAppFilter)
+    list_filter = ("is_active", ConnectWalletFilter, OpenWebAppFilter, "telegram_language_code")
     fieldsets = (
         (None,
          {'fields': (
@@ -62,6 +62,39 @@ class PlayerAdmin(ImportExportModelAdmin):
     ordering = ('telegram_id',)
     date_hierarchy = 'wallet_insert_dt'
     actions = ['sync_referrals']
+
+    def point_value(self, obj):
+        return obj.point_value
+
+    point_value.admin_order_field = 'point_value'
+
+    def get_queryset(self, request):
+        queryset = super().get_queryset(request)
+        queryset = queryset.annotate(
+            wallet=Case(
+                When(wallet_address__isnull=False, then=Value(1)),
+                default=Value(0),
+                output_field=IntegerField()
+            ),
+            win=Count('predictions', filter=F('predictions__is_win'), distinct=True),
+            prediction=Count('predictions', distinct=True),
+            referral_count=Count('refers', distinct=True),
+            mini_app=Case(
+                When(auth_token__isnull=False, then=Value(1)),
+                default=Value(0),
+                output_field=IntegerField()
+            )
+        ).annotate(
+            point_value=(
+                    5 +
+                    (10 * F('mini_app')) +
+                    (500 * F('wallet')) +
+                    (50 * F('win')) +
+                    F('prediction') +
+                    (5 * F('referral_count'))
+            )
+        )
+        return queryset
 
     def sync_referrals(self, request, queryset):
         today = timezone.make_aware(timezone.datetime.combine(timezone.datetime.today(), timezone.datetime.min.time()))
@@ -74,6 +107,13 @@ class PlayerAdmin(ImportExportModelAdmin):
             player = Player.objects.get(telegram_id=referrer_id)
             player.available_slots.number = referral_count + 1
             player.available_slots.save()
+
+
+@admin.register(Slot)
+class SlotAdmin(ImportExportModelAdmin):
+    list_display = ["player", "countdown", "number"]
+    list_filter = ["number", "countdown"]
+    search_fields = ["player__telegram_id", "player__telegram_username"]
 
 
 @admin.register(Prediction)
@@ -139,7 +179,7 @@ class CountDownAdmin(admin.ModelAdmin):
 @admin.register(Referral)
 class ReferralAdmin(ImportExportModelAdmin):
     resource_class = ReferralResource
-    list_display = ("referrer", "referee", "insert_dt")
+    list_display = ("referrer", "referee", "insert_dt", "referee_wallet")
     fieldsets = (
         (None,
          {'fields': ("referrer", "referee")},),
@@ -148,3 +188,7 @@ class ReferralAdmin(ImportExportModelAdmin):
                      'referrer__last_name']
     list_filter = [('insert_dt', DateFieldListFilter)]
     date_hierarchy = 'insert_dt'
+
+    @admin.display(description='referee wallet')
+    def referee_wallet(self, obj: Referral):
+        return obj.referee.wallet_address

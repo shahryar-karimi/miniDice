@@ -17,3 +17,7 @@ def token_expire_dt_generator():
         Generate expire datetime for token
     """
     return timezone.now() + datetime.timedelta(days=config.USER_TOKEN_EXPIRE_DAY)
+
+
+def calculate_player_point(wallet, win, prediction, referral_count, mini_app):
+    return 5 + 10 * mini_app + 500 * wallet + 50 * win + prediction + 5 * referral_count

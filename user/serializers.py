@@ -68,6 +68,12 @@ class CountDownSerializer(serializers.ModelSerializer):
         fields = ["expire_dt", "dice_number1", "dice_number2", "amount"]
 
 
+class CountdownListSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = CountDown
+        fields = ["id", "expire_dt"]
+
+
 class CountDownTimeSerializer(serializers.ModelSerializer):
     is_finished = serializers.SerializerMethodField()
 
@@ -82,7 +88,7 @@ class CountDownTimeSerializer(serializers.ModelSerializer):
 class PlayerSerializer(serializers.ModelSerializer):
     class Meta:
         model = Player
-        fields = ["telegram_id", "telegram_username", "telegram_language_code", "wallet_address"]
+        fields = ["telegram_id", "telegram_username", "telegram_language_code", "wallet_address", "point"]
 
 
 class PlayerUsernameSerializer(serializers.ModelSerializer):

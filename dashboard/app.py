@@ -6,10 +6,6 @@ from sqlalchemy import create_engine, Column, Integer, String, DateTime, Foreign
 from sqlalchemy.orm import sessionmaker, relationship, declarative_base
 import plotly.graph_objects as go
 import sympy as sp
-from dotenv import load_dotenv
-
-# Load environment variables from .env file
-load_dotenv()
 
 
 # Set up the environment variables

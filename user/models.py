@@ -7,6 +7,8 @@ from django.utils import timezone
 from django.utils.functional import cached_property
 from django_autoutils.model_utils import AbstractModel
 
+from utils.server_utils import calculate_player_point
+
 
 class Player(AbstractModel):
     telegram_id = models.BigIntegerField(unique=True, primary_key=True)
@@ -36,6 +38,15 @@ class Player(AbstractModel):
     @cached_property
     def available_slots(self):
         return Slot.get_slot(self)
+
+    @cached_property
+    def point(self):
+        wallet = self.wallet_address is not None
+        win = self.predictions.filter(is_win=True).count()
+        prediction = self.predictions.count()
+        referral_count = self.get_referrals().count()
+        mini_app = self.auth_token is not None
+        return calculate_player_point(wallet, win, prediction, referral_count, mini_app)
 
     def telegram_login(self):
         self.auth_token = self.telegram_id
@@ -88,7 +99,6 @@ class CountDown(AbstractModel):
                     is_win=True)
                 predictions_filter.filter(dice_number1=self.dice_number2, dice_number2=self.dice_number1).update(
                     is_win=True)
-                Player.objects.all().update(predict_slot=1)
             else:
                 raise ValueError("Count down time is not finished yet.")
 
@@ -126,7 +136,7 @@ class Prediction(AbstractModel):
 
 
 class Referral(AbstractModel):
-    referrer = models.ForeignKey(Player, on_delete=models.CASCADE, unique=False)
+    referrer = models.ForeignKey(Player, on_delete=models.CASCADE, unique=False, related_name='refers')
     referee = models.OneToOneField(Player, related_name="referrals", null=True, blank=True, on_delete=models.SET_NULL,
                                    unique=False)
 
