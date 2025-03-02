@@ -12,7 +12,11 @@ def _get_ton_balance(wallet_address):
         account = accounts[0]
         balance = account['balance']
         balance = int(balance)
-        wallet['TON'] = balance
+        value = {
+            'balance': balance,
+            'decimal': 9
+        }
+        wallet['TON'] = value
     return wallet
 
 
