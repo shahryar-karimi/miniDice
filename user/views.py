@@ -257,6 +257,9 @@ class ConnectWalletAPI(APIView):
             address = serializer.validated_data["wallet_address"]
         except Exception as e:
             return Response({"error": "Invalid data input"}, status=status.HTTP_400_BAD_REQUEST)
+        is_first_time = False
+        if Player.objects.filter(wallet_address=address).exists():
+            is_first_time = True
         player = request.user
         if not player or not isinstance(player, Player):
             return Response({"error": "Authentication error."}, status=status.HTTP_401_UNAUTHORIZED)
@@ -264,7 +267,7 @@ class ConnectWalletAPI(APIView):
         if not player.wallet_insert_dt:
             player.wallet_insert_dt = timezone.now()
         player.save()
-        return Response({"wallet_address": player.wallet_address}, status=status.HTTP_200_OK)
+        return Response({"wallet_address": player.wallet_address, "is_first_time": is_first_time}, status=status.HTTP_200_OK)
 
 
 class PlayerInfoAPI(APIView):
