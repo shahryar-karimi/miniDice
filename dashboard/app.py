@@ -7,7 +7,6 @@ from sqlalchemy.orm import sessionmaker, relationship, declarative_base
 import plotly.graph_objects as go
 import sympy as sp
 from langchain_openai import ChatOpenAI
-import random
 
 
 # Set up the environment variables
@@ -530,26 +529,55 @@ def extract_player_information():
             st.write("❌ ID must be a number.")
                       
 
-# Function to fetch eligible players based on conditions
-def fetch_eligible_players(min_predictions, min_wins, min_referrals):
+def fetch_random_eligible_player(min_predictions, min_wins, min_referrals):
+    # Subquery for total predictions and wins
+    predictions_subquery = session.query(
+        Prediction.player_id,
+        func.count(Prediction.id).label('total_predictions'),
+        func.sum(case((Prediction.is_win == True, 1), else_=0)).label('total_wins')
+    ).filter(Prediction.is_active == True) \
+        .group_by(Prediction.player_id).subquery()
+
+    # Subquery for total referrals
+    referrals_subquery = session.query(
+        UserReferral.referrer_id,
+        func.count(UserReferral.id).label('total_referrals'),
+    ).group_by(UserReferral.referrer_id).subquery()
+
+    # Main query with filtering conditions
     query = session.query(
         Player.telegram_id,
         Player.telegram_username,
         Player.first_name,
         Player.wallet_address,
-        func.count(Prediction.id).label('total_predictions'),
-        func.sum(case((Prediction.is_win.is_(True), 1), else_=0)).label('total_wins'),  # FIXED CAST
-        func.count(UserReferral.id).label('total_referrals')
-    ).outerjoin(Prediction, Player.telegram_id == Prediction.player_id) \
-     .outerjoin(UserReferral, Player.telegram_id == UserReferral.referrer_id) \
-     .filter(Prediction.is_active.is_(True)).group_by(Player.telegram_id).having(
-        func.count(Prediction.id) >= min_predictions,
-        func.sum(case((Prediction.is_win.is_(True), 1), else_=0)) >= min_wins,  # FIXED BOOLEAN CAST
-        func.count(UserReferral.id) >= min_referrals
-    ).all()
-    
-    return query
+        func.coalesce(predictions_subquery.c.total_predictions, 0).label('total_predictions'),
+        func.coalesce(predictions_subquery.c.total_wins, 0).label('total_wins'),
+        func.coalesce(referrals_subquery.c.total_referrals, 0).label('total_referrals')
+    ).outerjoin(predictions_subquery, Player.telegram_id == predictions_subquery.c.player_id) \
+        .outerjoin(referrals_subquery, Player.telegram_id == referrals_subquery.c.referrer_id) \
+        .filter(
+            func.coalesce(predictions_subquery.c.total_predictions, 0) >= min_predictions,
+            func.coalesce(predictions_subquery.c.total_wins, 0) >= min_wins,
+            func.coalesce(referrals_subquery.c.total_referrals, 0) >= min_referrals
+        ) \
+        .order_by(func.random()) \
+        .limit(1)
 
+    result = query.first()
+
+    if result:
+        return {
+            "telegram_id": result.telegram_id,
+            "telegram_username": result.telegram_username,
+            "first_name": result.first_name,
+            "wallet_address": result.wallet_address,
+            "total_predictions": result.total_predictions,
+            "total_wins": result.total_wins,
+            "total_referrals": result.total_referrals
+        }
+    return None  # Return None if no eligible player is found
+    
+    
 # Function to generate success story using LangChain
 def generate_success_story(player, game_description, instruction):
     prompt = f"""
@@ -598,14 +626,11 @@ def success_story():
     
     # Submit button
     if st.button("🎲 Generate Success Story"):
-        eligible_players = fetch_eligible_players(min_predictions, min_wins, min_referrals)
-
-        if not eligible_players:
+        selected_player = fetch_random_eligible_player(min_predictions, min_wins, min_referrals)
+        print(selected_player)
+        if not selected_player:
             st.warning("No players meet the selected criteria. Try adjusting the values.")
         else:
-            # Convert result to dictionary and randomly pick a player
-            selected_player = random.choice(eligible_players)._asdict()
-
             # Generate a success story
             success_story = generate_success_story(selected_player, game_description, instruction)
 
