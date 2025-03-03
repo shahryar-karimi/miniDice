@@ -6,7 +6,7 @@ from user.models import Player
 
 class Asset(AbstractModel):
     player = models.ForeignKey(Player, on_delete=models.CASCADE)
-    symbol = models.CharField(max_length=10, null=True, blank=True)
+    symbol = models.CharField(max_length=255, null=True, blank=True)
     balance = models.DecimalField(max_digits=32, decimal_places=2, null=True, blank=True)
     decimal = models.PositiveIntegerField(null=True, blank=True)
 
