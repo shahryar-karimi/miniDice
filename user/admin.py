@@ -56,7 +56,7 @@ class PlayerAdmin(ImportExportModelAdmin):
     fieldsets = (
         (None,
          {'fields': (
-             "telegram_id", "referral_code", "telegram_username", "telegram_language_code", "auth_token",
+             "telegram_id", "referral_code", "telegram_username", "first_name", "last_name", "telegram_language_code", "auth_token",
              "wallet_address", "wallet_insert_dt")},),
     )
     ordering = ('telegram_id',)
