@@ -1,7 +1,6 @@
 import telegram
 from django.conf import settings
 from telegram import (
-    # TelegramObject,
     InlineKeyboardMarkup,
     InlineKeyboardButton,
 )

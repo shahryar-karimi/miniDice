@@ -29,6 +29,7 @@ class PredictionResource(resources.ModelResource):
             return countdown.amount / countdown.get_won_players_count()
         return 0
 
+
 class ReferralResource(resources.ModelResource):
     class Meta:
         model = Referral

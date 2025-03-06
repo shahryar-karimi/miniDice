@@ -267,7 +267,8 @@ class ConnectWalletAPI(APIView):
         if not player.wallet_insert_dt:
             player.wallet_insert_dt = timezone.now()
         player.save()
-        return Response({"wallet_address": player.wallet_address, "is_first_time": is_first_time}, status=status.HTTP_200_OK)
+        return Response({"wallet_address": player.wallet_address, "is_first_time": is_first_time},
+                        status=status.HTTP_200_OK)
 
 
 class PlayerInfoAPI(APIView):
