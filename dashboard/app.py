@@ -2,13 +2,12 @@ import os
 import pandas as pd
 import streamlit as st
 from datetime import datetime, timedelta
-from sqlalchemy import create_engine, Column, Integer, String, DateTime, ForeignKey, func, distinct, case
+from sqlalchemy import create_engine, Column, Integer, BigInteger, String, DateTime, ForeignKey, func, distinct, case, desc
 from sqlalchemy.orm import sessionmaker, relationship, declarative_base
 import plotly.graph_objects as go
 import sympy as sp
 from langchain_openai import ChatOpenAI
 import random
-
 
 # Set up the environment variables
 host = os.getenv("POSTGRES_HOST")
@@ -58,6 +57,17 @@ class UserReferral(Base):
     referrer_ref = relationship("Player", backref="referrals", foreign_keys=[referrer_id])
     referee_ref = relationship("Player", backref="referred_by", foreign_keys=[referee_id])
 
+
+
+class Asset(Base):
+    __tablename__ = 'assets'
+    id = Column(Integer, primary_key=True)
+    player_id = Column(Integer, ForeignKey('player.telegram_id'))
+    symbol = Column(String)
+    balance = Column(BigInteger)
+    decimal = Column(Integer)
+    
+    
 # Create the engine and session
 engine = create_engine(f'postgresql://{user}:{db_password}@{host}:{port}/{dbname}')
 Session = sessionmaker(bind=engine)
@@ -107,23 +117,35 @@ def fetch_analyzed_data_grouped_by_date():
         )
     ).group_by(func.date(Player.wallet_insert_dt)).subquery()
 
+    
+    unique_wallet_predicion_query = session.query(
+    func.date(Prediction.insert_dt).label('insert_d'),
+    func.count(func.distinct(Player.wallet_address)).label('unique_wallets_predictions_count')
+    ).join(Player, Prediction.player_id == Player.telegram_id) \
+    .filter(Player.wallet_address.isnot(None)) \
+    .group_by(func.date(Prediction.insert_dt)).subquery()
+        
+    
     # Combine all queries into a single result
     result_query = session.query(
-        players_joined_query.c.insert_d,
-        players_joined_query.c.joined_players_count,
-        players_wallet_query.c.count_wallets,
-        referrals_query.c.count_referrals,
-        predictions_query.c.winners_count,
-        predictions_query.c.unique_players_count,
-        predictions_query.c.predictions_count,
-        players_noref_wallet_query.c.count_joined_player_noref_wallet
+    players_joined_query.c.insert_d,
+    players_joined_query.c.joined_players_count,
+    players_wallet_query.c.count_wallets,
+    referrals_query.c.count_referrals,
+    predictions_query.c.winners_count,
+    predictions_query.c.unique_players_count,
+    predictions_query.c.predictions_count,
+    players_noref_wallet_query.c.count_joined_player_noref_wallet,
+    unique_wallet_predicion_query.c.unique_wallets_predictions_count  
     ).outerjoin(players_wallet_query, players_joined_query.c.insert_d == players_wallet_query.c.insert_d) \
-     .outerjoin(referrals_query, players_joined_query.c.insert_d == referrals_query.c.insert_d) \
-     .outerjoin(predictions_query, players_joined_query.c.insert_d == predictions_query.c.insert_d) \
-     .outerjoin(players_noref_wallet_query, players_joined_query.c.insert_d == players_noref_wallet_query.c.insert_d)
-
+    .outerjoin(referrals_query, players_joined_query.c.insert_d == referrals_query.c.insert_d) \
+    .outerjoin(predictions_query, players_joined_query.c.insert_d == predictions_query.c.insert_d) \
+    .outerjoin(players_noref_wallet_query, players_joined_query.c.insert_d == players_noref_wallet_query.c.insert_d) \
+    .outerjoin(unique_wallet_predicion_query, players_joined_query.c.insert_d == unique_wallet_predicion_query.c.insert_d) 
+     
     # Fetch the result as a DataFrame
     df_analyzed_data = fetch_data(result_query)
+    df_analyzed_data['unique_wallets_predictions_count'] = df_analyzed_data['unique_wallets_predictions_count'].fillna(0)   
 
     # Fill NaN values with 0
     df_analyzed_data['count_referrals'] = df_analyzed_data['count_referrals'].fillna(0)
@@ -522,7 +544,26 @@ def extract_player_information():
                     st.dataframe(referrals_df)
                 else:
                     st.write("😢 No referrals found for this player.")
-
+                
+                
+                def extract_wallet():
+                    assets = session.query(Asset).filter(Asset.player_id == telegram_id_extract_player).all()
+                    if assets:
+                        assets_df = pd.DataFrame([{
+                            'Asset ID': asset.id,
+                            'Player ID': asset.player_id,
+                            'Symbol': asset.symbol,
+                            'Balance': asset.balance,
+                            'Decimal': asset.decimal
+                        } for asset in assets])
+                        st.dataframe(assets_df)
+                    else:
+                        st.write("😢 No money found for this player.")
+                
+                st.markdown('---')
+                st.write("🤑 **Assets**")
+                extract_wallet()
+                
         except ValueError:
             st.write("❌ ID must be a number.")
                       
@@ -638,6 +679,35 @@ def success_story():
 
 
 
+
+def assets_section():
+    
+    query = session.query(
+        Asset.symbol,
+        func.count(Asset.id).label('total_repeats'),
+    ).group_by(Asset.symbol).order_by(desc('total_repeats'))
+    
+    st.write("💰 **Table of All Assets**")
+    result_df = fetch_data(query)
+    st.dataframe(result_df)
+    
+    
+    st.markdown('---')
+    st.write('💵 **Active Wallets Data**')
+    all_wallets = session.query(Player).filter(Player.wallet_address.isnot(None)).count()
+    active_wallets = result_df.iloc[0]['total_repeats']
+    inactive_wallets = all_wallets - active_wallets
+    ratio_active_wallets = active_wallets / all_wallets
+    ratio_inactive_wallets = inactive_wallets / all_wallets
+    
+    st.write(f'All wallets: {all_wallets}')
+    st.write(f'Active wallets: {active_wallets}')
+    st.write(f'Inactive wallets: {inactive_wallets}')
+    st.write(f'Active wallets ratio: {100 * round(ratio_active_wallets, 4)} \%')
+    st.write(f'Inactive wallets ratio: {100 * round(ratio_inactive_wallets, 4)} \%')
+
+
+
 def main():
     if 'auth' not in st.session_state:
         st.session_state.auth = False
@@ -691,6 +761,9 @@ def main():
             extract_player_information()
         with st.expander("🎉 Generate a Player Success Story"):
             success_story()
+            
+        with st.expander("🪙 Assets"):
+            assets_section()
 
 if __name__ == "__main__":
     main()
