@@ -1,6 +1,6 @@
 from django.contrib import admin
 from django.contrib.admin import DateFieldListFilter
-from django.db.models import F, Count, IntegerField, Case, When, Value
+from django.db.models import Count
 from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
 from import_export.admin import ImportExportModelAdmin
@@ -56,8 +56,8 @@ class PlayerAdmin(ImportExportModelAdmin):
     fieldsets = (
         (None,
          {'fields': (
-             "telegram_id", "referral_code", "telegram_username", "first_name", "last_name", "telegram_language_code", "auth_token",
-             "wallet_address", "wallet_insert_dt")},),
+             "telegram_id", "referral_code", "telegram_username", "first_name", "last_name", "telegram_language_code",
+             "auth_token", "wallet_address", "wallet_insert_dt")},),
     )
     ordering = ('telegram_id',)
     date_hierarchy = 'wallet_insert_dt'
@@ -123,7 +123,7 @@ class PredictionAdmin(ImportExportModelAdmin):
 @admin.register(CountDown)
 class CountDownAdmin(admin.ModelAdmin):
     list_display = (
-        "insert_dt", "expire_dt", "dice_number1", "dice_number2", "is_active", "amount", "predictions_count",
+        "id", "insert_dt", "expire_dt", "dice_number1", "dice_number2", "is_active", "amount", "predictions_count",
         "won_players", "is_finished", "has_end")
     list_filter = ("is_active",)
     fieldsets = (
