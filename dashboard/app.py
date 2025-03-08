@@ -1,6 +1,4 @@
 import os
-import random
-
 import pandas as pd
 import streamlit as st
 from datetime import datetime, timedelta
@@ -9,6 +7,8 @@ from sqlalchemy.orm import sessionmaker, relationship, declarative_base
 import plotly.graph_objects as go
 import sympy as sp
 from langchain_openai import ChatOpenAI
+import random
+
 
 # Set up the environment variables
 host = os.getenv("POSTGRES_HOST")
@@ -20,9 +20,9 @@ STREAMLIT_PASSWORD = os.getenv("STREAMLIT_PASSWORD")
 API_KEY = os.getenv("API_KEY")
 llm = ChatOpenAI(model="gpt-4o", api_key=API_KEY, temperature=0.3)
 
+
 # Define the base for the ORM
 Base = declarative_base()
-
 
 # Define the ORM classes
 class Player(Base):
@@ -35,7 +35,6 @@ class Player(Base):
     wallet_address = Column(String)
     wallet_insert_dt = Column(DateTime)
     insert_dt = Column(DateTime)
-
 
 class Prediction(Base):
     __tablename__ = 'prediction'
@@ -50,7 +49,6 @@ class Prediction(Base):
     is_active = Column(Integer)
     player_ref = relationship("Player", backref="predictions")
 
-
 class UserReferral(Base):
     __tablename__ = 'user_referral'
     id = Column(Integer, primary_key=True)
@@ -60,32 +58,14 @@ class UserReferral(Base):
     referrer_ref = relationship("Player", backref="referrals", foreign_keys=[referrer_id])
     referee_ref = relationship("Player", backref="referred_by", foreign_keys=[referee_id])
 
-
 # Create the engine and session
 engine = create_engine(f'postgresql://{user}:{db_password}@{host}:{port}/{dbname}')
 Session = sessionmaker(bind=engine)
 session = Session()
 
-
 # Helper function to fetch data from the database
 def fetch_data(query):
     return pd.read_sql(query.statement, session.bind)
-
-
-# Fetch data for the previous day
-def fetch_data_for_previous_day():
-    today = datetime.today().date()
-    previous_day = today - timedelta(days=1)
-
-    # Query players who made predictions on the previous day
-    players_prev_day = session.query(Player).join(Prediction).filter(
-        func.date(Prediction.insert_dt) == previous_day).all()
-
-    # Query referrals made on the previous day
-    referrals_prev_day = session.query(UserReferral).filter(func.date(UserReferral.insert_dt) == previous_day).all()
-
-    return players_prev_day, referrals_prev_day
-
 
 # Fetch analyzed data grouped by date
 def fetch_analyzed_data_grouped_by_date():
@@ -100,7 +80,7 @@ def fetch_analyzed_data_grouped_by_date():
         func.date(Player.wallet_insert_dt).label('insert_d'),
         func.count(Player.telegram_id).label('count_wallets')
     ).filter(Player.wallet_address.isnot(None)) \
-        .group_by(func.date(Player.wallet_insert_dt)).subquery()
+     .group_by(func.date(Player.wallet_insert_dt)).subquery()
 
     # Query for referrals grouped by date
     referrals_query = session.query(
@@ -138,23 +118,20 @@ def fetch_analyzed_data_grouped_by_date():
         predictions_query.c.predictions_count,
         players_noref_wallet_query.c.count_joined_player_noref_wallet
     ).outerjoin(players_wallet_query, players_joined_query.c.insert_d == players_wallet_query.c.insert_d) \
-        .outerjoin(referrals_query, players_joined_query.c.insert_d == referrals_query.c.insert_d) \
-        .outerjoin(predictions_query, players_joined_query.c.insert_d == predictions_query.c.insert_d) \
-        .outerjoin(players_noref_wallet_query, players_joined_query.c.insert_d == players_noref_wallet_query.c.insert_d)
+     .outerjoin(referrals_query, players_joined_query.c.insert_d == referrals_query.c.insert_d) \
+     .outerjoin(predictions_query, players_joined_query.c.insert_d == predictions_query.c.insert_d) \
+     .outerjoin(players_noref_wallet_query, players_joined_query.c.insert_d == players_noref_wallet_query.c.insert_d)
 
     # Fetch the result as a DataFrame
     df_analyzed_data = fetch_data(result_query)
 
     # Fill NaN values with 0
     df_analyzed_data['count_referrals'] = df_analyzed_data['count_referrals'].fillna(0)
-    df_analyzed_data['count_joined_player_noref_wallet'] = df_analyzed_data['count_joined_player_noref_wallet'].fillna(
-        0)
+    df_analyzed_data['count_joined_player_noref_wallet'] = df_analyzed_data['count_joined_player_noref_wallet'].fillna(0)
 
     # Calculate joined without referral
-    df_analyzed_data['joined_without_referral'] = df_analyzed_data['joined_players_count'] - df_analyzed_data[
-        'count_referrals']
+    df_analyzed_data['joined_without_referral'] = df_analyzed_data['joined_players_count'] - df_analyzed_data['count_referrals']
     df_analyzed_data = df_analyzed_data.sort_values(by='insert_d').reset_index(drop=True)
-
     # Add a total row
     def add_total_row(df):
         total_row = {'insert_d': 'Total'}
@@ -181,21 +158,28 @@ def fetch_winners_grouped_by_date():
         func.array_agg(distinct(Player.telegram_id)).label('winners_telegram_ids'),
         func.array_agg(distinct(Player.telegram_username)).label('winners_telegram_usernames')
     ).join(Player, Prediction.player_id == Player.telegram_id) \
-        .filter(Prediction.is_win == True) \
-        .group_by(func.date(Prediction.insert_dt))
-
+     .filter(Prediction.is_win == True) \
+     .group_by(func.date(Prediction.insert_dt))
+    
     df = fetch_data(query)
     df['amount_per_winner'] = 100.0 / df['number_of_winners']
     return df
-
+# Fetch data for a specific date
+def fetch_data_for_date(selected_date):
+    # Query players who made predictions on the selected date
+    players = session.query(Player).join(Prediction).filter(func.date(Prediction.insert_dt) == selected_date).all()
+    
+    # Query referrals made on the selected date
+    referrals = session.query(UserReferral).filter(func.date(UserReferral.insert_dt) == selected_date).all()
+    
+    return players, referrals
 
 # Player giveaway function
-def player_giveaway(players_prev_day):
-    if players_prev_day:
+def player_giveaway(players):
+    if players:
         st.write("🎰 **20$ Prize**")
-        if st.button("🎲 Select a Random Player from Yesterday's Predictions"):
-            index = random.randint(0, len(list(players_prev_day)))
-            random_player = players_prev_day[index]
+        if st.button("🎲 Select a Random Player from Selected Date's Predictions"):
+            random_player = players[0]  # Simplified for demonstration
             st.session_state.selected_player = random_player
 
         if 'selected_player' in st.session_state:
@@ -205,16 +189,14 @@ def player_giveaway(players_prev_day):
             st.write(f"📛 First Name: `{player.first_name}`")
             st.write(f"💳 Wallet Address: `{player.wallet_address}`")
     else:
-        st.write("😢 No players made predictions yesterday.")
-
+        st.write("😢 No players made predictions on the selected date.")
 
 # Referrer giveaway function
-def referrer_giveaway(referrals_prev_day):
-    if referrals_prev_day:
+def referrer_giveaway(referrals):
+    if referrals:
         st.write("🎁 **30$ Prize**")
-        if st.button("🎲 Select a Random Referrer from Yesterday's Referrals"):
-            index = random.randint(0, len(list(referrals_prev_day)))
-            random_referrer = referrals_prev_day[index]
+        if st.button("🎲 Select a Random Referrer from Selected Date's Referrals"):
+            random_referrer = referrals[0]  # Simplified for demonstration
             st.session_state.selected_referrer = random_referrer
 
         if 'selected_referrer' in st.session_state:
@@ -224,8 +206,9 @@ def referrer_giveaway(referrals_prev_day):
             st.write(f"📛 First Name: `{referrer.referrer_ref.first_name}`")
             st.write(f"💳 Wallet Address: `{referrer.referrer_ref.wallet_address}`")
     else:
-        st.write("😢 No referrers made referrals yesterday.")
+        st.write("😢 No referrers made referrals on the selected date.")
 
+# Main function
 
 def create_math_function(expression, variables):
     # Create symbolic variables
@@ -272,8 +255,8 @@ def plot_graphs(df_analyzed_data):
     filtered_data = df_analyzed_data[
         (df_analyzed_data['insert_d'] >= pd.to_datetime(start_date)) &
         (df_analyzed_data['insert_d'] <= pd.to_datetime(end_date))
-        ]
-
+    ]
+    
     filtered_data['insert_d'] = filtered_data['insert_d'].dt.date  # Convert to date-only format
 
     # Expression Builder UI
@@ -392,8 +375,8 @@ def plot_graphs(df_analyzed_data):
         st.plotly_chart(fig)
     else:
         st.write("No expressions saved yet. Please build and save an expression.")
-
-
+        
+        
 def extract_wallet_information():
     wallet_address = st.text_input("🔑 Enter the wallet address")
 
@@ -529,8 +512,7 @@ def extract_player_information():
                 # Player Referrals
                 st.markdown('---')
                 st.write("🤝 **Referrals**")
-                referrals = session.query(UserReferral).filter(
-                    UserReferral.referrer_id == telegram_id_extract_player).all()
+                referrals = session.query(UserReferral).filter(UserReferral.referrer_id == telegram_id_extract_player).all()
                 if referrals:
                     referrals_df = pd.DataFrame([{
                         'Referral ID': ref.id,
@@ -543,7 +525,7 @@ def extract_player_information():
 
         except ValueError:
             st.write("❌ ID must be a number.")
-
+                      
 
 def fetch_random_eligible_player(min_predictions, min_wins, min_referrals):
     # Subquery for total predictions and wins
@@ -572,10 +554,10 @@ def fetch_random_eligible_player(min_predictions, min_wins, min_referrals):
     ).outerjoin(predictions_subquery, Player.telegram_id == predictions_subquery.c.player_id) \
         .outerjoin(referrals_subquery, Player.telegram_id == referrals_subquery.c.referrer_id) \
         .filter(
-        func.coalesce(predictions_subquery.c.total_predictions, 0) >= min_predictions,
-        func.coalesce(predictions_subquery.c.total_wins, 0) >= min_wins,
-        func.coalesce(referrals_subquery.c.total_referrals, 0) >= min_referrals
-    ) \
+            func.coalesce(predictions_subquery.c.total_predictions, 0) >= min_predictions,
+            func.coalesce(predictions_subquery.c.total_wins, 0) >= min_wins,
+            func.coalesce(referrals_subquery.c.total_referrals, 0) >= min_referrals
+        ) \
         .order_by(func.random()) \
         .limit(1)
 
@@ -592,8 +574,8 @@ def fetch_random_eligible_player(min_predictions, min_wins, min_referrals):
             "total_referrals": result.total_referrals
         }
     return None  # Return None if no eligible player is found
-
-
+    
+    
 # Function to generate success story using LangChain
 def generate_success_story(player, game_description, instruction):
     prompt = f"""
@@ -616,7 +598,6 @@ def generate_success_story(player, game_description, instruction):
     response = llm.invoke(history)
     return response.content
 
-
 def success_story():
     st.markdown("Use this tool to create a motivational success story for a player!")
 
@@ -626,8 +607,7 @@ def success_story():
     min_referrals = st.number_input("Minimum Referrals", min_value=0, value=1)
 
     # Input field for game explanation to ChatGPT
-    game_description = st.text_area("Describe Your Game for ChatGPT",
-                                    "A thrilling dice prediction game with exciting rewards!")
+    game_description = st.text_area("Describe Your Game for ChatGPT", "A thrilling dice prediction game with exciting rewards!")
 
     instruction = st.text_area("Insert Your Instructions for ChatGPT", """I want you to act as a game copywriter for Dice Maniacs. Your role is to craft electrifying, high-converting, and community-driven content that keeps players engaged, excited, and coming back for more. Your writing should be sharp, persuasive, and action-packed, using a mix of FOMO (Fear of Missing Out), psychological triggers, and strategic formatting to drive engagement.
     Your responsibilities include:
@@ -641,7 +621,7 @@ def success_story():
     Your tone should be conversational, energetic, and immersive—like a game host keeping the crowd on their toes. Keep your language concise, bold, and full of momentum. Use emojis strategically to enhance readability, and make every post feel like an event.
 
     """)
-
+    
     # Submit button
     if st.button("🎲 Generate Success Story"):
         selected_player = fetch_random_eligible_player(min_predictions, min_wins, min_referrals)
@@ -655,6 +635,7 @@ def success_story():
             # Display the generated story
             st.subheader("✨ Success Story")
             st.write(success_story)
+
 
 
 def main():
@@ -672,7 +653,6 @@ def main():
         # Fetch data
         df_analyzed_data = fetch_analyzed_data_grouped_by_date()
         df_winners_grouped = fetch_winners_grouped_by_date()
-        players_prev_day, referrals_prev_day = fetch_data_for_previous_day()
 
         # Display data
         with st.expander("📄 Data Sheets"):
@@ -683,21 +663,34 @@ def main():
 
         # Giveaways
         with st.expander("🎁 Giveaways"):
-            player_giveaway(players_prev_day)
-            referrer_giveaway(referrals_prev_day)
+            default_date = datetime.today().date() - timedelta(days=1)
+    
+            # Allow user to select a custom date
+            selected_date = st.date_input("Select a date", value=default_date, max_value=datetime.today().date())
+            
+            # Fetch data for the selected date
+            players, referrals = fetch_data_for_date(selected_date)
+    
+            # Display player giveaway section
+            st.header("Player Giveaway")
+            player_giveaway(players)
+            
+            # Display referrer giveaway section
+            st.header("Referrer Giveaway")
+            referrer_giveaway(referrals)
+
 
         # Graphs
         with st.expander("📈 Graphs"):
             plot_graphs(df_analyzed_data)
-
+            
         with st.expander("💸 Extract Wallet Information"):
             extract_wallet_information()
-
+            
         with st.expander("👨🏻‍💼 Extract Player Information"):
             extract_player_information()
         with st.expander("🎉 Generate a Player Success Story"):
             success_story()
-
 
 if __name__ == "__main__":
     main()
