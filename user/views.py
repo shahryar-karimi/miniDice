@@ -238,7 +238,7 @@ class CountdownsAPI(APIView):
         tags=["Count down"]
     )
     def get(self, request):
-        countdowns = CountDown.objects.filter(expire_dt__lt=timezone.now())
+        countdowns = CountDown.objects.filter(expire_dt__lt=timezone.now()).order_by("-expire_dt")
         serializer = CountdownListSerializer(countdowns, many=True)
         return Response(serializer.data, status=status.HTTP_200_OK)
 
