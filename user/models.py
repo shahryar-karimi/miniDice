@@ -51,7 +51,7 @@ class Player(AbstractModel):
 
     @staticmethod
     def players_with_point_value(queryset):
-        return queryset.annotate(
+        return queryset.prefetch_related("predictions", "refers").annotate(
             wallet=Case(
                 When(wallet_address__isnull=False, then=Value(1)),
                 default=Value(0),
