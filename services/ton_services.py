@@ -61,7 +61,7 @@ def _get_jettons(wallet_address):
     response = response.json()
     jettons = response['jetton_wallets'] 
     metadata = response['metadata']
-    for jetton in tqdm(jettons):
+    for jetton in jettons:
         jetton_code = jetton['jetton']
         address = detect_address(f"{jetton_code}")
 
@@ -108,6 +108,3 @@ def get_balance(wallet_address):
     
     
     
-if __name__ == "__main__":
-    wallet = 'UQBwHP7QWC45YmO-6Rzj_pXGy7KavYgAkiPO5Qy2ZrKdSJ_D'
-    print(get_balance(wallet))
