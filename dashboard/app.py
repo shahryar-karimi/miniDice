@@ -131,7 +131,7 @@ def update_report_table(df_analyzed_data):
         players_noref_wallet_connected = int(row['count_joined_player_noref_wallet']) if pd.notna(row['count_joined_player_noref_wallet']) else None
         unique_wallets_predictions = int(row['unique_wallets_predictions_count']) if pd.notna(row['unique_wallets_predictions_count']) else None
         players_joined_without_referral = int(row['joined_without_referral']) if pd.notna(row['joined_without_referral']) else None
-        new_wallets_count = int(row['new_wallets_count'] if pd.notna(row['new_wallets_count'])) else None
+        new_wallets_count = int(row['new_wallets_count']) if pd.notna(row['new_wallets_count']) else None
 
         # Use no_autoflush to prevent premature flushing
         with session_dashboard.no_autoflush:
