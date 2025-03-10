@@ -2,13 +2,13 @@ import os
 import pandas as pd
 import streamlit as st
 from datetime import datetime, timedelta
-from sqlalchemy import create_engine, Column, Integer, BigInteger, String, DateTime, ForeignKey, func, distinct, case, desc, Float
+from sqlalchemy import create_engine, Column, Integer, BigInteger, String, DateTime, ForeignKey, func, distinct, case, desc, Float, select
 from sqlalchemy.orm import sessionmaker, relationship, declarative_base
 import plotly.graph_objects as go
 import sympy as sp
 from langchain_openai import ChatOpenAI
-import random
 import numpy as np
+
 # Set up the environment variables
 host = os.getenv("POSTGRES_HOST")
 dbname = os.getenv("POSTGRES_DB")
@@ -81,16 +81,17 @@ class Report(Base):
     id = Column(Integer, primary_key=True)
     date = Column(DateTime, unique=True)
     joined_players = Column(Integer)
-    average_joined_players = Column(Float) # toDo
+    average_joined_players = Column(Float) # calculated
     connected_wallets = Column(Integer)
-    average_connected_wallets = Column(Float) # toDo
+    average_connected_wallets = Column(Float) # calculated
+    new_wallets_count = Column(Integer)
     referrals = Column(Integer)
     winners = Column(Integer)
     unique_players = Column(Integer)
     players_noref_wallet_connected = Column(Integer)
     unique_wallets_predictions = Column(Integer)
     players_joined_without_referral = Column(Integer)
-    bot_blocks = Column(Integer) # toDo
+    bot_blocks = Column(Integer) # calculated
     
     
 # Create the engine and session
@@ -121,10 +122,6 @@ def update_report_table(df_analyzed_data):
         average_joined_players = float(df_analyzed_data['joined_players_count'].mean()) if not np.isnan(df_analyzed_data['joined_players_count'].mean()) else None
         average_connected_wallets = float(df_analyzed_data['count_wallets'].mean()) if not np.isnan(df_analyzed_data['count_wallets'].mean()) else None
 
-        # Debugging: Print the calculated averages
-        print(f"average_joined_players: {average_joined_players}, type: {type(average_joined_players)}")
-        print(f"average_connected_wallets: {average_connected_wallets}, type: {type(average_connected_wallets)}")
-
         # Convert row values to native Python types and handle NaN
         joined_players = int(row['joined_players_count']) if pd.notna(row['joined_players_count']) else None
         connected_wallets = int(row['count_wallets']) if pd.notna(row['count_wallets']) else None
@@ -134,6 +131,7 @@ def update_report_table(df_analyzed_data):
         players_noref_wallet_connected = int(row['count_joined_player_noref_wallet']) if pd.notna(row['count_joined_player_noref_wallet']) else None
         unique_wallets_predictions = int(row['unique_wallets_predictions_count']) if pd.notna(row['unique_wallets_predictions_count']) else None
         players_joined_without_referral = int(row['joined_without_referral']) if pd.notna(row['joined_without_referral']) else None
+        new_wallets_count = int(row['new_wallets_count'] if pd.notna(row['new_wallets_count'])) else None
 
         # Use no_autoflush to prevent premature flushing
         with session_dashboard.no_autoflush:
@@ -149,6 +147,7 @@ def update_report_table(df_analyzed_data):
                 report_entry.players_noref_wallet_connected = players_noref_wallet_connected
                 report_entry.unique_wallets_predictions = unique_wallets_predictions
                 report_entry.players_joined_without_referral = players_joined_without_referral
+                report_entry.new_wallets_count = new_wallets_count
             else:
                 new_report_entry = Report(
                     date=row['insert_d'],
@@ -161,7 +160,8 @@ def update_report_table(df_analyzed_data):
                     unique_players=unique_players,
                     players_noref_wallet_connected=players_noref_wallet_connected,
                     unique_wallets_predictions=unique_wallets_predictions,
-                    players_joined_without_referral=players_joined_without_referral
+                    players_joined_without_referral=players_joined_without_referral,
+                    new_wallets_count=new_wallets_count
                 )
                 session_dashboard.add(new_report_entry)
 
@@ -247,10 +247,37 @@ def fetch_analyzed_data_grouped_by_date():
     
     
     
+    wallet_first_occurrence_subquery = session.query(
+        Player.telegram_id,
+        Player.wallet_address,
+        func.date(Player.wallet_insert_dt).label('insert_t'),
+        case(
+            (func.row_number().over(
+                partition_by=Player.wallet_address,
+                order_by=desc(Player.wallet_insert_dt),
+            ) == 1, 1),
+            else_=0
+        ).label('is_first_occurrence')
+    ).filter(Player.wallet_address.isnot(None)).subquery()
+    
+    # Main query to group by date and count new wallets
+    new_wallets_per_day_query = session.query(
+        wallet_first_occurrence_subquery.c.insert_t,
+        func.sum(wallet_first_occurrence_subquery.c.is_first_occurrence).label('new_wallets_count')
+    ).group_by(
+        wallet_first_occurrence_subquery.c.insert_t
+    ).order_by(
+        wallet_first_occurrence_subquery.c.insert_t
+    )
+
+    new_wallets_per_day = new_wallets_per_day_query.all()
+    new_wallets_df = pd.DataFrame(new_wallets_per_day, columns=['insert_t', 'new_wallets_count'])
+    df_analyzed_data = pd.merge(df_analyzed_data, new_wallets_df, how='left', left_on='insert_d', right_on='insert_t')
+    df_analyzed_data['new_wallets_count'] = df_analyzed_data['new_wallets_count'].fillna(0)
+    
+    
+    
     update_report_table(df_analyzed_data)
-    
-    
-    
     # Add a total row
     def add_total_row(df):
         total_row = {'insert_d': 'Total'}
@@ -285,10 +312,7 @@ def fetch_winners_grouped_by_date():
     return df
 # Fetch data for a specific date
 def fetch_data_for_date(selected_date):
-    # Query players who made predictions on the selected date
     players = session.query(Player).join(Prediction).filter(func.date(Prediction.insert_dt) == selected_date).all()
-    
-    # Query referrals made on the selected date
     referrals = session.query(UserReferral).filter(func.date(UserReferral.insert_dt) == selected_date).all()
     
     return players, referrals
@@ -327,22 +351,13 @@ def referrer_giveaway(referrals):
     else:
         st.write("😢 No referrers made referrals on the selected date.")
 
-# Main function
 
 def create_math_function(expression, variables):
-    # Create symbolic variables
     sym_vars = {var: sp.symbols(var) for var in variables}
-
-    # Replace $var$ with the symbolic variable
     for var in variables:
         expression = expression.replace(f'${var}$', str(sym_vars[var]))
-
-    # Parse the expression into a symbolic expression
     sym_expr = sp.sympify(expression)
-
-    # Create a lambda function from the symbolic expression
     func = sp.lambdify(list(sym_vars.values()), sym_expr, 'numpy')
-
     return func
 
 
@@ -763,7 +778,6 @@ def success_story():
     # Submit button
     if st.button("🎲 Generate Success Story"):
         selected_player = fetch_random_eligible_player(min_predictions, min_wins, min_referrals)
-        print(selected_player)
         if not selected_player:
             st.warning("No players meet the selected criteria. Try adjusting the values.")
         else:
