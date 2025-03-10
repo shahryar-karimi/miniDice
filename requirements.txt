@@ -13,3 +13,4 @@ gunicorn==23.0.0
 asgiref==3.8.1
 django-import-export==4.3.5
 pytonlib==0.0.64
+setuptools==76.0.0
