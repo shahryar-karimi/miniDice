@@ -56,7 +56,7 @@ services:
     volumes:
       - ../volumes/postgres_dev_data_dashboard:/var/lib/postgresql/data # Use volumes directory for persistent data
     env_file:
-      - ./.env_dashboard_db
+      - .dashboard_env/.env
     networks:
       - dev_network
 
