@@ -1,19 +1,5 @@
 import time
-
 import requests
-from pytonlib.utils.address import detect_address
-
-
-def _get_coin_price(ton_or_address):
-    url = "https://tonapi.io/v2/rates"
-    params = {
-        'tokens': ton_or_address,
-        'currencies': 'usd'
-    }
-    response = requests.get(url, params=params)
-    response.raise_for_status()
-    response = response.json()
-    return response['rates'][ton_or_address]['prices']['USD']
 
 
 def _get_ton_balance(wallet_address):
@@ -28,11 +14,9 @@ def _get_ton_balance(wallet_address):
         balance = account['balance']
         balance = int(balance)
         decimal = 9
-        price = _get_coin_price('TON')
         value = {
             'balance': balance,
             'decimal': decimal,
-            'value': (price * (balance / 10 ** decimal))
         }
         wallet['TON'] = value
     return wallet
@@ -48,12 +32,6 @@ def _get_jettons(wallet_address):
     metadata = response['metadata']
     for jetton in jettons:
         jetton_code = jetton['jetton']
-        address = detect_address(f"{jetton_code}")
-
-        friendly_address = address['bounceable']['b64url']
-        price = _get_coin_price(friendly_address)
-        price = float(price)
-
         balance = jetton['balance']
         balance = int(balance)
         jetton_metadata = metadata.get(jetton_code, {})
@@ -63,11 +41,26 @@ def _get_jettons(wallet_address):
         value = {
             'balance': balance,
             'decimal': decimal,
-            'value': (price * (balance / 10 ** decimal))
         }
         wallet[jetton_symbol] = value
     return wallet
+    
+    
+def _get_ids(list_of_coins):
+    url = "https://api.coingecko.com/api/v3/coins/list"
 
+    payload = {}
+    headers = {
+    'accept': 'application/json',
+    'x-cg-demo-api-key': 'CG-acXGFe42mUsK8w9W6oPnhGVE'
+    }
+
+    response = requests.request("GET", url, headers=headers, data=payload)
+    response.raise_for_status()
+    response = response.json()
+    output = [coin_data for coin_data in response if coin_data['name'] in list_of_coins]
+
+    return output
 
 def get_balance(wallet_address):
     jettons = _get_jettons(wallet_address)
@@ -79,3 +72,6 @@ def get_balance(wallet_address):
     else:
         wallet = {**ton, **jettons}
         return wallet
+    
+    
+    
