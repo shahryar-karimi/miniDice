@@ -54,7 +54,7 @@ def _get_jettons(wallet_address):
         balance = int(balance)
         jetton_metadata = metadata.get(jetton_code, {})
         jetton_info = jetton_metadata.get('token_info', {})[0]
-        decimal = int(jetton_info.get('extra', {}).get('decimals', 0))
+        decimal = int(jetton_info.get('extra', {}).get('decimals', 9))
         jetton_symbol = jetton_info.get('symbol', '')
         jetton_name = jetton_info.get('name', '')
         address = jetton.get('jetton', '')
