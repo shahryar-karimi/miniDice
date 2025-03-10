@@ -1,6 +1,6 @@
 from django.contrib import admin
 from django.contrib.admin import DateFieldListFilter
-from django.db.models import Count
+from django.db.models import Count, Prefetch, Q
 from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
 from import_export.admin import ImportExportModelAdmin
@@ -68,8 +68,18 @@ class PlayerAdmin(ImportExportModelAdmin):
 
     point_value.admin_order_field = 'point_value'
 
+    def available_slots(self, obj):
+        if hasattr(obj, 'available_slot') and obj.available_slot:
+            slot = obj.available_slot[0]
+            return slot.number
+        return "No active slot"
+
+    available_slots.admin_order_field = 'available_slots'
+
     def get_queryset(self, request):
-        queryset = super().get_queryset(request)
+        active_countdown = CountDown.get_active_countdown()
+        queryset = super().get_queryset(request).prefetch_related(
+            Prefetch('slot_set', queryset=Slot.objects.filter(countdown=active_countdown), to_attr='available_slot'))
         return Player.players_with_point_value(queryset)
 
     def sync_referrals(self, request, queryset):
@@ -132,6 +142,12 @@ class CountDownAdmin(admin.ModelAdmin):
     )
     actions = ["end_countdown"]
 
+    def get_queryset(self, request):
+        queryset = super().get_queryset(request).annotate(
+            predictions_count=Count('predictions', filter=Q(predictions__is_active=True)),
+            won_players=Count('predictions', filter=Q(predictions__is_win=True)))
+        return queryset
+
     def end_countdown(self, request, queryset):
         countdowns = queryset.all()
         for countdown in countdowns:
@@ -143,13 +159,15 @@ class CountDownAdmin(admin.ModelAdmin):
 
     @admin.display(description='Won players count')
     def won_players(self, obj: CountDown):
-        if obj.is_finished:
-            return obj.get_won_players_count()
+        if hasattr(obj, 'won_players') and obj.won_players:
+            return obj.won_players
         return 0
 
     @admin.display(description='All predictions count')
     def predictions_count(self, obj: CountDown):
-        return obj.predictions.filter(is_active=True).count()
+        if hasattr(obj, 'predictions_count') and obj.predictions_count:
+            return obj.predictions_count
+        return 0
 
 
 @admin.register(Referral)
