@@ -9,6 +9,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     libjpeg62 \
     zlib1g \
     libmagic1 \
+    build-essential \
     netcat-traditional \
     dos2unix \
  && rm -rf /var/lib/apt/lists/*
