@@ -2,13 +2,13 @@ import os
 import pandas as pd
 import streamlit as st
 from datetime import datetime, timedelta
-from sqlalchemy import create_engine, Column, Integer, BigInteger, String, DateTime, ForeignKey, func, distinct, case, desc
+from sqlalchemy import create_engine, Column, Integer, BigInteger, String, DateTime, ForeignKey, func, distinct, case, desc, Float
 from sqlalchemy.orm import sessionmaker, relationship, declarative_base
 import plotly.graph_objects as go
 import sympy as sp
 from langchain_openai import ChatOpenAI
 import random
-
+import numpy as np
 # Set up the environment variables
 host = os.getenv("POSTGRES_HOST")
 dbname = os.getenv("POSTGRES_DB")
@@ -81,9 +81,9 @@ class Report(Base):
     id = Column(Integer, primary_key=True)
     date = Column(DateTime, unique=True)
     joined_players = Column(Integer)
-    average_joined_players = Column(Integer) # toDo
+    average_joined_players = Column(Float) # toDo
     connected_wallets = Column(Integer)
-    average_connected_wallets = Column(Integer) # toDo
+    average_connected_wallets = Column(Float) # toDo
     referrals = Column(Integer)
     winners = Column(Integer)
     unique_players = Column(Integer)
@@ -103,6 +103,9 @@ engine_dashboard = create_engine(f'postgresql://{user_dashboard}:{db_password_da
 Session_dashboard = sessionmaker(bind=engine_dashboard)
 session_dashboard = Session_dashboard()
 
+Base.metadata.drop_all(engine_dashboard)  # Drop all tables
+Base.metadata.create_all(engine_dashboard)
+
 
 # Helper function to fetch data from the database
 def fetch_data(query):
@@ -114,43 +117,56 @@ def update_report_table(df_analyzed_data):
         if row['insert_d'] == 'Total':
             continue
 
-        # Calculate the average joined players
-        average_joined_players = df_analyzed_data['joined_players_count'].mean()
+        # Calculate averages and convert NumPy types to native Python types
+        average_joined_players = float(df_analyzed_data['joined_players_count'].mean()) if not np.isnan(df_analyzed_data['joined_players_count'].mean()) else None
+        average_connected_wallets = float(df_analyzed_data['count_wallets'].mean()) if not np.isnan(df_analyzed_data['count_wallets'].mean()) else None
 
-        # Calculate the average connected wallets
-        average_connected_wallets = df_analyzed_data['count_wallets'].mean()
+        # Debugging: Print the calculated averages
+        print(f"average_joined_players: {average_joined_players}, type: {type(average_joined_players)}")
+        print(f"average_connected_wallets: {average_connected_wallets}, type: {type(average_connected_wallets)}")
 
-        # Create or update the report entry
-        report_entry = session_dashboard.query(Report).filter(Report.date == row['insert_d']).first()
-        if report_entry:
-            report_entry.joined_players = row['joined_players_count']
-            report_entry.average_joined_players = average_joined_players
-            report_entry.connected_wallets = row['count_wallets']
-            report_entry.average_connected_wallets = average_connected_wallets
-            report_entry.referrals = row['count_referrals']
-            report_entry.winners = row['winners_count']
-            report_entry.unique_players = row['unique_players_count']
-            report_entry.players_noref_wallet_connected = row['count_joined_player_noref_wallet']
-            report_entry.unique_wallets_predictions = row['unique_wallets_predictions_count']
-            report_entry.players_joined_without_referral = row['joined_without_referral']
-        else:
-            new_report_entry = Report(
-                date=row['insert_d'],
-                joined_players=row['joined_players_count'],
-                average_joined_players=average_joined_players,
-                connected_wallets=row['count_wallets'],
-                average_connected_wallets=average_connected_wallets,
-                referrals=row['count_referrals'],
-                winners=row['winners_count'],
-                unique_players=row['unique_players_count'],
-                players_noref_wallet_connected=row['count_joined_player_noref_wallet'],
-                unique_wallets_predictions=row['unique_wallets_predictions_count'],
-                players_joined_without_referral=row['joined_without_referral']
-            )
-            session_dashboard.add(new_report_entry)
+        # Convert row values to native Python types and handle NaN
+        joined_players = int(row['joined_players_count']) if pd.notna(row['joined_players_count']) else None
+        connected_wallets = int(row['count_wallets']) if pd.notna(row['count_wallets']) else None
+        referrals = int(row['count_referrals']) if pd.notna(row['count_referrals']) else None
+        winners = int(row['winners_count']) if pd.notna(row['winners_count']) else None
+        unique_players = int(row['unique_players_count']) if pd.notna(row['unique_players_count']) else None
+        players_noref_wallet_connected = int(row['count_joined_player_noref_wallet']) if pd.notna(row['count_joined_player_noref_wallet']) else None
+        unique_wallets_predictions = int(row['unique_wallets_predictions_count']) if pd.notna(row['unique_wallets_predictions_count']) else None
+        players_joined_without_referral = int(row['joined_without_referral']) if pd.notna(row['joined_without_referral']) else None
+
+        # Use no_autoflush to prevent premature flushing
+        with session_dashboard.no_autoflush:
+            report_entry = session_dashboard.query(Report).filter(Report.date == row['insert_d']).first()
+            if report_entry:
+                report_entry.joined_players = joined_players
+                report_entry.average_joined_players = average_joined_players
+                report_entry.connected_wallets = connected_wallets
+                report_entry.average_connected_wallets = average_connected_wallets
+                report_entry.referrals = referrals
+                report_entry.winners = winners
+                report_entry.unique_players = unique_players
+                report_entry.players_noref_wallet_connected = players_noref_wallet_connected
+                report_entry.unique_wallets_predictions = unique_wallets_predictions
+                report_entry.players_joined_without_referral = players_joined_without_referral
+            else:
+                new_report_entry = Report(
+                    date=row['insert_d'],
+                    joined_players=joined_players,
+                    average_joined_players=average_joined_players,
+                    connected_wallets=connected_wallets,
+                    average_connected_wallets=average_connected_wallets,
+                    referrals=referrals,
+                    winners=winners,
+                    unique_players=unique_players,
+                    players_noref_wallet_connected=players_noref_wallet_connected,
+                    unique_wallets_predictions=unique_wallets_predictions,
+                    players_joined_without_referral=players_joined_without_referral
+                )
+                session_dashboard.add(new_report_entry)
 
     session_dashboard.commit()
-
+    
 # Fetch analyzed data grouped by date
 def fetch_analyzed_data_grouped_by_date():
     # Query for players joined grouped by date
