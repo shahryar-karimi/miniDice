@@ -48,7 +48,7 @@ services:
     networks:
       - dev_network
   
-  dashboard:
+  db_dashboard:
     image: postgres:latest
     container_name: dev-db-dashboard
     ports:
