@@ -14,4 +14,3 @@ asgiref==3.8.1
 django-import-export==4.3.5
 pytonlib==0.0.64
 setuptools==76.0.0
-django-debug-toolbar==5.0.1
