@@ -18,11 +18,14 @@ def sync_assets():
                 break
             except Exception as e:
                 print(e)
-        for asset, value in assets.items():
-            create_asset, is_created = Asset.objects.get_or_create(symbol=asset, player=player)
+        for master_address, value in assets.items():
+            create_asset, is_created = Asset.objects.get_or_create(master_address=master_address, player=player)
             create_asset.balance = value.get("balance")
             create_asset.decimal = value.get("decimal")
-            create_asset.save(update_fields=["balance", "decimal"])
+            create_asset.price = value.get("price")
+            create_asset.name = value.get("name")
+            create_asset.symbol = value.get("symbol")
+            create_asset.save(update_fields=["balance", "decimal", "price", "name", "symbol"])
 
 
 def main():

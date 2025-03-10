@@ -7,7 +7,7 @@ from user.models import Player
 
 @admin.register(Asset)
 class AssetAdmin(admin.ModelAdmin):
-    list_display = ["player", "symbol", "balance", "decimal", "update_dt"]
+    list_display = ["player", "symbol", "balance", "decimal", "price", "usd_value", "update_dt"]
     list_filter = ["symbol"]
     search_fields = ["player__telegram_id", "player__telegram_username", "player__first_name"]
     actions = ["sync_assets"]
@@ -23,11 +23,10 @@ class AssetAdmin(admin.ModelAdmin):
                 except Exception as e:
                     print(e)
             for master_address, value in assets.items():
-                create_asset, is_created = Asset.objects.get_or_create(symbol=master_address, player=player)
+                create_asset, is_created = Asset.objects.get_or_create(master_address=master_address, player=player)
                 create_asset.balance = value.get("balance")
                 create_asset.decimal = value.get("decimal")
                 create_asset.price = value.get("price")
-                create_asset.usd_value = value.get("usd_value")
                 create_asset.name = value.get("name")
                 create_asset.symbol = value.get("symbol")
-                create_asset.save(update_fields=["balance", "decimal", "price", "usd_value", "name", "symbol"])
+                create_asset.save(update_fields=["balance", "decimal", "price", "name", "symbol"])
