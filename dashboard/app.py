@@ -75,6 +75,12 @@ class Asset(Base):
     balance = Column(BigInteger)
     decimal = Column(Integer)
     
+
+class RandomTable(Base):
+    __tablename__ = 'random_table'
+    id = Column(Integer, primary_key=True)
+    random_value = Column(String)
+    insert_dt = Column(DateTime, default=datetime.utcnow) 
     
 # Create the engine and session
 engine = create_engine(f'postgresql://{user}:{db_password}@{host}:{port}/{dbname}')
@@ -88,11 +94,7 @@ session_dashboard = Session_dashboard()
 
 def test_db():
     # Define a new ORM class for the random table
-    class RandomTable(Base):
-        __tablename__ = 'random_table'
-        id = Column(Integer, primary_key=True)
-        random_value = Column(String)
-        insert_dt = Column(DateTime, default=datetime.utcnow)
+    
 
     # Create the table in the dashboard database
     Base.metadata.create_all(engine_dashboard)
@@ -105,8 +107,17 @@ def test_db():
     st.write("Inserted a new random value into the random_table.")
     
     
-    
-    
+def show_test_db():
+    test_db()
+    test_db()
+    # Fetch the random values from the random table
+    query = session_dashboard.query(RandomTable).all()
+    if query:
+        st.write("🎲 **Random")
+        for entry in query:
+            st.write(f"Random Value: {entry.random_value}")
+    else:
+        st.write("😢 No random values found.")
     
 # Helper function to fetch data from the database
 def fetch_data(query):
@@ -803,6 +814,9 @@ def main():
             
         with st.expander("🪙 Assets"):
             assets_section()
+            
+        with st.expander("Test"):
+            show_test_db()
 
 if __name__ == "__main__":
     main()
