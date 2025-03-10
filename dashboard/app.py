@@ -9,6 +9,7 @@ import sympy as sp
 from langchain_openai import ChatOpenAI
 import numpy as np
 
+
 # Set up the environment variables
 host = os.getenv("POSTGRES_HOST")
 dbname = os.getenv("POSTGRES_DB")
@@ -250,7 +251,7 @@ def fetch_analyzed_data_grouped_by_date():
     wallet_first_occurrence_subquery = session.query(
         Player.telegram_id,
         Player.wallet_address,
-        func.date(Player.wallet_insert_dt).label('insert_t'),
+        func.date(Player.wallet_insert_dt).label('insert_d'),
         case(
             (func.row_number().over(
                 partition_by=Player.wallet_address,
@@ -262,17 +263,17 @@ def fetch_analyzed_data_grouped_by_date():
     
     # Main query to group by date and count new wallets
     new_wallets_per_day_query = session.query(
-        wallet_first_occurrence_subquery.c.insert_t,
+        wallet_first_occurrence_subquery.c.insert_d,
         func.sum(wallet_first_occurrence_subquery.c.is_first_occurrence).label('new_wallets_count')
     ).group_by(
-        wallet_first_occurrence_subquery.c.insert_t
+        wallet_first_occurrence_subquery.c.insert_d
     ).order_by(
-        wallet_first_occurrence_subquery.c.insert_t
+        wallet_first_occurrence_subquery.c.insert_d
     )
 
     new_wallets_per_day = new_wallets_per_day_query.all()
-    new_wallets_df = pd.DataFrame(new_wallets_per_day, columns=['insert_t', 'new_wallets_count'])
-    df_analyzed_data = pd.merge(df_analyzed_data, new_wallets_df, how='left', left_on='insert_d', right_on='insert_t')
+    new_wallets_df = pd.DataFrame(new_wallets_per_day, columns=['insert_d', 'new_wallets_count'])
+    df_analyzed_data = pd.merge(df_analyzed_data, new_wallets_df, how='left', left_on='insert_d', right_on='insert_d')
     df_analyzed_data['new_wallets_count'] = df_analyzed_data['new_wallets_count'].fillna(0)
     
     
@@ -302,8 +303,7 @@ def fetch_winners_grouped_by_date():
         func.count(distinct(Prediction.player_id)).label('number_of_winners'),
         func.array_agg(distinct(Player.wallet_address)).label('winners_wallet_addresses'),
         func.array_agg(distinct(Player.telegram_id)).label('winners_telegram_ids'),
-        func.array_agg(distinct(Player.telegram_username)).label('winners_telegram_usernames'),
-        func.count(distinct(Player.wallet_address)).label('unique_wallets_counts')
+        func.array_agg(distinct(Player.telegram_username)).label('winners_telegram_usernames')
     ).join(Player, Prediction.player_id == Player.telegram_id) \
      .filter(Prediction.is_win == True) \
      .group_by(func.date(Prediction.insert_dt))
@@ -351,7 +351,6 @@ def referrer_giveaway(referrals):
             st.write(f"💳 Wallet Address: `{referrer.referrer_ref.wallet_address}`")
     else:
         st.write("😢 No referrers made referrals on the selected date.")
-
 
 def create_math_function(expression, variables):
     sym_vars = {var: sp.symbols(var) for var in variables}
@@ -459,9 +458,9 @@ def plot_graphs(df_analyzed_data):
             st.session_state.expressions.pop(i)
             st.rerun()
 
-    # Plotting
+    # Plotting Expression Builder Graphs
     if st.session_state.expressions:
-        fig = go.Figure()
+        fig_expr = go.Figure()
 
         for expr in st.session_state.expressions:
             try:
@@ -486,7 +485,7 @@ def plot_graphs(df_analyzed_data):
                 result = [math_func(*[row[var] for var in variables]) for _, row in filtered_data.iterrows()]
 
                 # Add trace to plot
-                fig.add_trace(go.Scatter(
+                fig_expr.add_trace(go.Scatter(
                     x=filtered_data['insert_d'],
                     y=result,
                     mode='lines',
@@ -499,7 +498,7 @@ def plot_graphs(df_analyzed_data):
         def fix_date(dt):
             return str(dt).split()[0]
 
-        fig.update_layout(
+        fig_expr.update_layout(
             title=f"Plotted Expressions from {fix_date(start_date)} to {fix_date(end_date)}",
             xaxis_title="Date",
             yaxis_title="Value",
@@ -507,9 +506,88 @@ def plot_graphs(df_analyzed_data):
             showlegend=True
         )
 
-        st.plotly_chart(fig)
+        st.plotly_chart(fig_expr)
     else:
         st.write("No expressions saved yet. Please build and save an expression.")
+
+
+
+def plot_histograms(df_analyzed_data):
+     # New Section: Histogram of Dice Pairs
+    st.header("🎲 Dice Pair Predictions Histogram")
+    df_analyzed_data['insert_d'] = pd.to_datetime(df_analyzed_data['insert_d'], errors='coerce')
+
+    # Ensure valid min and max dates for slider
+    min_date = df_analyzed_data['insert_d'].min()
+    max_date = df_analyzed_data['insert_d'].max()
+
+    if pd.isnull(min_date) or pd.isnull(max_date):
+        st.error("No valid dates available for plotting.")
+        return
+
+    min_date = min_date.to_pydatetime()
+    max_date = max_date.to_pydatetime()
+
+    # Create date range slider
+    start_date, end_date = st.slider(
+        "Select Date Range",
+        min_value=min_date,
+        max_value=max_date,
+        value=(min_date, max_date),
+        format="YYYY-MM-DD",
+        key='hist_slider'
+    )
+    # Fetch dice pairs within the selected date range
+    dice_pairs_query = session.query(
+        Prediction.dice_number1,
+        Prediction.dice_number2
+    ).filter(
+        Prediction.insert_dt >= start_date,
+        Prediction.insert_dt <= end_date
+    )
+
+    dice_pairs_df = fetch_data(dice_pairs_query)
+
+    if not dice_pairs_df.empty:
+        dice_pairs_df['dice_pair'] = dice_pairs_df.apply(
+            lambda row: f"{min(row['dice_number1'], row['dice_number2'])}-{max(row['dice_number1'], row['dice_number2'])}",
+            axis=1
+        )
+        ordered_dice_pairs = []
+        for i in range(1, 7):
+            for j in range(i, 7):
+                ordered_dice_pairs.append(f"{str(i)}-{str(j)}")
+        all_dice_pairs_df = pd.DataFrame({"dice_pair": ordered_dice_pairs})
+        dice_counts = dice_pairs_df['dice_pair'].value_counts().reset_index()
+        dice_counts.columns = ['dice_pair', 'count']
+        merged_df = all_dice_pairs_df.merge(dice_counts, on='dice_pair', how='left').fillna(0)
+        merged_df['dice_pair'] = pd.Categorical(merged_df['dice_pair'], categories=ordered_dice_pairs, ordered=True)
+        merged_df = merged_df.sort_values('dice_pair')
+
+        # Plot histogram
+        fig_dice = go.Figure()
+
+        fig_dice.add_trace(go.Bar(
+            x=merged_df['dice_pair'],
+            y=merged_df['count'],
+            name="Dice Pairs",
+            marker_color='#1f77b4',
+            opacity=0.75
+        ))
+
+        # Update layout
+        fig_dice.update_layout(
+            title=f"Histogram of Dice Pairs from {start_date.date()} to {end_date.date()}",
+            xaxis_title="Dice Pair",
+            yaxis_title="Frequency",
+            template="plotly_dark",
+            showlegend=True,
+            bargap=0.1
+        )
+
+        st.plotly_chart(fig_dice)
+    else:
+        st.write("😢 No dice pair predictions found in the selected date range.")
         
         
 def extract_wallet_information():
@@ -867,6 +945,9 @@ def main():
         # Graphs
         with st.expander("📈 Graphs"):
             plot_graphs(df_analyzed_data)
+            
+        with st.expander("📊 Histograms"):
+            plot_histograms(df_analyzed_data)
             
         with st.expander("💸 Extract Wallet Information"):
             extract_wallet_information()
