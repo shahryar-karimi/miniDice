@@ -15,6 +15,14 @@ dbname = os.getenv("POSTGRES_DB")
 user = os.getenv("POSTGRES_USER")
 db_password = os.getenv("POSTGRES_PASSWORD")
 port = os.getenv("POSTGRES_PORT")
+
+host_dashboard_db = os.getenv("POSTGRES_HOST_DASHBOARD")
+dbname_dashboard = os.getenv("POSTGRES_DB_DASHBOARD")
+user_dashboard = os.getenv("POSTGRES_USER_DASHBOARD")
+db_password_dashboard = os.getenv("POSTGRES_PASSWORD_DASHBOARD")
+port_dashboard = os.getenv("POSTGRES_PORT_DASHBOARD")
+
+
 STREAMLIT_PASSWORD = os.getenv("STREAMLIT_PASSWORD")
 API_KEY = os.getenv("API_KEY")
 llm = ChatOpenAI(model="gpt-4o", api_key=API_KEY, temperature=0.3)
@@ -73,6 +81,33 @@ engine = create_engine(f'postgresql://{user}:{db_password}@{host}:{port}/{dbname
 Session = sessionmaker(bind=engine)
 session = Session()
 
+# Create the engine and session for the dashboard database
+engine_dashboard = create_engine(f'postgresql://{user_dashboard}:{db_password_dashboard}@{host_dashboard_db}:{port_dashboard}/{dbname_dashboard}')
+Session_dashboard = sessionmaker(bind=engine_dashboard)
+session_dashboard = Session_dashboard()
+
+def test_db():
+    # Define a new ORM class for the random table
+    class RandomTable(Base):
+        __tablename__ = 'random_table'
+        id = Column(Integer, primary_key=True)
+        random_value = Column(String)
+        insert_dt = Column(DateTime, default=datetime.utcnow)
+
+    # Create the table in the dashboard database
+    Base.metadata.create_all(engine_dashboard)
+
+    # Insert a random value into the random table
+    new_entry = RandomTable(random_value=str(random.randint(1, 100)))
+    session_dashboard.add(new_entry)
+    session_dashboard.commit()
+
+    st.write("Inserted a new random value into the random_table.")
+    
+    
+    
+    
+    
 # Helper function to fetch data from the database
 def fetch_data(query):
     return pd.read_sql(query.statement, session.bind)
@@ -709,6 +744,10 @@ def assets_section():
 
 
 def main():
+    test_db()
+    test_db()
+    
+    
     if 'auth' not in st.session_state:
         st.session_state.auth = False
 
