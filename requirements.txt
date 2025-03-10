@@ -12,6 +12,4 @@ django-redis==5.4.0
 gunicorn==23.0.0
 asgiref==3.8.1
 django-import-export==4.3.5
-selenium==4.29.0
 pytonlib==0.0.64
-webdriver-manager==4.0.2
