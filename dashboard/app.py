@@ -75,6 +75,7 @@ class Asset(Base):
     symbol = Column(String)
     balance = Column(BigInteger)
     decimal = Column(Integer)
+    
   
   
 class Report(Base):
