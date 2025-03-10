@@ -790,9 +790,7 @@ def assets_section():
 
 
 def main():
-    test_db()
-    test_db()
-    
+
     
     if 'auth' not in st.session_state:
         st.session_state.auth = False
@@ -849,9 +847,7 @@ def main():
             
         with st.expander("🪙 Assets"):
             assets_section()
-            
-        with st.expander("Test"):
-            show_test_db()
+
 
 if __name__ == "__main__":
     main()
