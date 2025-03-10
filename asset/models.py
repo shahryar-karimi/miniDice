@@ -17,7 +17,10 @@ class Asset(AbstractModel):
 
     @cached_property
     def usd_value(self):
-        return (self.balance / 10 ** self.decimal) * self.price
+        if self.price:
+            return (self.balance / 10 ** self.decimal) * self.price
+        else:
+            return 0
 
     class Meta:
         db_table = 'assets'
