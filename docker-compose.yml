@@ -52,7 +52,7 @@ services:
     image: postgres:latest
     container_name: dev-db-dashboard
     ports:
-      - "5433:5432" # Expose PostgreSQL port
+      - "5435:5432" # Expose PostgreSQL port
     volumes:
       - ../volumes/postgres_dev_data_dashboard:/var/lib/postgresql/data # Use volumes directory for persistent data
     env_file:
