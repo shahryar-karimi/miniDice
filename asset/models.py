@@ -15,16 +15,16 @@ class Asset(AbstractModel):
         verbose_name = 'Asset'
         verbose_name_plural = 'Assets'
 
-
-class Token(AbstractModel):
-    token_symbol = models.CharField(max_length=255)
-    token_friendly_address = models.CharField(max_length=255, null=True)
-    price = models.DecimalField(max_digits=32, decimal_places=24, null=True)
-    
-    class Meta:
-        db_table = 'tokens'
-        verbose_name = 'Token'
-        verbose_name_plural = 'Tokens'
-    
-    
-    
+#
+# class Token(AbstractModel):
+#     token_symbol = models.CharField(max_length=255)
+#     token_friendly_address = models.CharField(max_length=255, null=True)
+#     price = models.DecimalField(max_digits=32, decimal_places=24, null=True)
+#
+#     class Meta:
+#         db_table = 'tokens'
+#         verbose_name = 'Token'
+#         verbose_name_plural = 'Tokens'
+#
+#
+#
