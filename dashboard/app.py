@@ -302,7 +302,8 @@ def fetch_winners_grouped_by_date():
         func.count(distinct(Prediction.player_id)).label('number_of_winners'),
         func.array_agg(distinct(Player.wallet_address)).label('winners_wallet_addresses'),
         func.array_agg(distinct(Player.telegram_id)).label('winners_telegram_ids'),
-        func.array_agg(distinct(Player.telegram_username)).label('winners_telegram_usernames')
+        func.array_agg(distinct(Player.telegram_username)).label('winners_telegram_usernames'),
+        func.count(distinct(Player.wallet_address)).label('unique_wallets_counts')
     ).join(Player, Prediction.player_id == Player.telegram_id) \
      .filter(Prediction.is_win == True) \
      .group_by(func.date(Prediction.insert_dt))
