@@ -1,5 +1,5 @@
 import streamlit as st
-from helper_functions import fetch_analyzed_data_grouped_by_date, fetch_winners_grouped_by_date, fetch_data_for_date, plot_graphs, plot_histograms, extract_wallet_information, extract_player_information, success_story, assets_section, player_giveaway, referrer_giveaway
+from helper_functions import fetch_analyzed_data_grouped_by_date, fetch_winners_grouped_by_date, fetch_data_for_date, plot_graphs, plot_histograms, extract_wallet_information, extract_player_information, success_story, assets_section, player_giveaway, referrer_giveaway, plot_frequent_graphs
 from datetime import datetime, timedelta
 
 # Page Functions
@@ -55,3 +55,9 @@ def success_story_page(session, llm):
 def assets_page(session):
     st.title("🪙 Assets")
     assets_section(session)
+    
+    
+def frequent_graphs_page(session, session_dashboard, DEBUG):
+    st.title("📈 Frequent Graphs")
+    df_analyzed_data = fetch_analyzed_data_grouped_by_date(session, session_dashboard, DEBUG)
+    plot_frequent_graphs(df_analyzed_data)

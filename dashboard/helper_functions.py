@@ -222,13 +222,14 @@ def fetch_data_for_date(selected_date, session):
 # Player giveaway function
 def player_giveaway(players, selected_date):
     if players:
+        key = f'selected_player_{str(selected_date)}'
         st.write("🎰 **20$ Prize**")
         if st.button("🎲 Select a Random Player from Selected Date's Predictions"):
             random_player = random.choice(players)
-            st.session_state[f'selected_player_{str(selected_date)}'] = random_player
+            st.session_state[key] = random_player
 
-        if f'selected_player_{str(selected_date)}' in st.session_state:
-            player = st.session_state.selected_player
+        if key in st.session_state:
+            player = st.session_state[key]
             st.write(f"🆔 Telegram ID: `{player.telegram_id}`")
             st.write(f"👤 Username: `{player.telegram_username}`")
             st.write(f"📛 First Name: `{player.first_name}`")
@@ -239,13 +240,14 @@ def player_giveaway(players, selected_date):
 # Referrer giveaway function
 def referrer_giveaway(referrals, selected_date):
     if referrals:
+        key = f'selected_referrer_{str(selected_date)}'
         st.write("🎁 **30$ Prize**")
         if st.button("🎲 Select a Random Referrer from Selected Date's Referrals"):
             random_referrer = random.choice(referrals)
-            st.session_state[f'selected_referrer_{str(selected_date)}'] = random_referrer
+            st.session_state[key] = random_referrer
 
-        if f'selected_referrer_{str(selected_date)}' in st.session_state:
-            referrer = st.session_state.selected_referrer
+        if key in st.session_state:
+            referrer = st.session_state[key]
             st.write(f"🆔 Telegram ID: `{referrer.referrer_id}`")
             st.write(f"👤 Username: `{referrer.referrer_ref.telegram_username}`")
             st.write(f"📛 First Name: `{referrer.referrer_ref.first_name}`")
@@ -675,7 +677,7 @@ def plot_graphs(df_analyzed_data):
 
     if st.session_state.isVar:
         for column in columns:
-            display = column.replace('_', ',')
+            display = column.replace('_', '\,')
             if st.button(f"${display}$", key=f'add_{column}'):
                 st.session_state.expr += f'${column}$'
                 st.session_state.isVar = False
@@ -707,7 +709,7 @@ def plot_graphs(df_analyzed_data):
         if st.button("Save Expression", type="primary"):
             if expr.strip():
                 st.session_state.expressions.append(expr)
-                disp = expr.replace('_', ',')
+                disp = expr.replace('_', '\,')
                 st.success(f"Expression '{disp}' saved!")
                 reset()
             else:
@@ -717,7 +719,7 @@ def plot_graphs(df_analyzed_data):
     # Display and delete saved expressions
     st.header("Saved Expressions")
     for i, expr in enumerate(st.session_state.expressions):
-        disp = expr.replace('_', ',')
+        disp = expr.replace('_', '\,')
         if st.button(f"Delete: {disp}", key=f"delete_{i}"):
             st.session_state.expressions.pop(i)
             st.rerun()
@@ -853,3 +855,14 @@ def plot_histograms(df_analyzed_data, session):
     else:
         st.write("😢 No dice pair predictions found in the selected date range.")
         
+        
+def plot_frequent_graphs(df_analyzed_data):
+    count_wallets = df_analyzed_data['count_wallets']
+    new_wallets = df_analyzed_data['new_wallets_count']
+    joined_players = df_analyzed_data['joined_players_count']
+    predictions = df_analyzed_data['predictions_count']
+    
+    signals = [count_wallets, new_wallets, joined_players, predictions]
+    titles = ['Wallets', 'New Wallets', 'Joined Players', 'Predictions']
+    
+    
