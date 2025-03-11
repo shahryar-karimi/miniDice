@@ -72,7 +72,9 @@ class PlayerAdmin(ImportExportModelAdmin):
         if hasattr(obj, 'available_slot') and obj.available_slot:
             slot = obj.available_slot[0]
             return slot.number
-        return "No active slot"
+        else:
+            slot = Slot.get_slot(obj)
+            return slot.number
 
     available_slots.admin_order_field = 'available_slots'
 
