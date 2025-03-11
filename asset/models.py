@@ -14,13 +14,13 @@ class Asset(AbstractModel):
     balance = models.DecimalField(max_digits=32, decimal_places=2, null=True, blank=True)
     decimal = models.IntegerField(null=True, blank=True)
     price = models.DecimalField(max_digits=56, decimal_places=24, null=True, blank=True)
+    usd_value = models.DecimalField(max_digits=56, decimal_places=24, null=True, blank=True)
 
-    @cached_property
-    def usd_value(self):
+    def set_usd_value(self):
         if self.price:
-            return (self.balance / 10 ** self.decimal) * self.price
+            self.usd_value = (self.balance / 10 ** self.decimal) * self.price
         else:
-            return 0
+            self.usd_value = 0
 
     class Meta:
         db_table = 'assets'
