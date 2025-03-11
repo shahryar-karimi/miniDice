@@ -201,7 +201,7 @@ def fetch_winners_grouped_by_date(session):
     query = session.query(
         func.date(Prediction.insert_dt).label('insert_dt'),
         func.count(distinct(Prediction.player_id)).label('number_of_winners'),
-        func.count(distinct(Player.wallet_address)).label('unique_wallets')
+        func.count(distinct(Player.wallet_address)).label('unique_wallets'),
         func.array_agg(distinct(Player.wallet_address)).label('winners_wallet_addresses'),
         func.array_agg(distinct(Player.telegram_id)).label('winners_telegram_ids'),
         func.array_agg(distinct(Player.telegram_username)).label('winners_telegram_usernames')
