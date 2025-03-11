@@ -21,6 +21,7 @@ class AssetAdmin(admin.ModelAdmin):
     usd.short_description = 'usd value'
 
     def sync_assets(self, request, queryset):
+        Asset.objects.all().delete()
         players = Player.objects.filter(wallet_address__isnull=False)
         for player in players:
             assets = {}

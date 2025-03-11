@@ -1,5 +1,3 @@
-from functools import cached_property
-
 from django.db import models
 from django_autoutils.model_utils import AbstractModel
 
