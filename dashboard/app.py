@@ -8,7 +8,9 @@ import plotly.graph_objects as go
 import sympy as sp
 from langchain_openai import ChatOpenAI
 import numpy as np
-
+from dotenv import load_dotenv
+load_dotenv()
+DEBUG = os.getenv("DEBUG")
 
 # Set up the environment variables
 host = os.getenv("POSTGRES_HOST")
@@ -17,11 +19,12 @@ user = os.getenv("POSTGRES_USER")
 db_password = os.getenv("POSTGRES_PASSWORD")
 port = os.getenv("POSTGRES_PORT")
 
-host_dashboard_db = os.getenv("POSTGRES_HOST_DASHBOARD")
-dbname_dashboard = os.getenv("POSTGRES_DB_DASHBOARD")
-user_dashboard = os.getenv("POSTGRES_USER_DASHBOARD")
-db_password_dashboard = os.getenv("POSTGRES_PASSWORD_DASHBOARD")
-port_dashboard = os.getenv("POSTGRES_PORT_DASHBOARD")
+if not DEBUG:
+    host_dashboard_db = os.getenv("POSTGRES_HOST_DASHBOARD")
+    dbname_dashboard = os.getenv("POSTGRES_DB_DASHBOARD")
+    user_dashboard = os.getenv("POSTGRES_USER_DASHBOARD")
+    db_password_dashboard = os.getenv("POSTGRES_PASSWORD_DASHBOARD")
+    port_dashboard = os.getenv("POSTGRES_PORT_DASHBOARD")
 
 
 STREAMLIT_PASSWORD = os.getenv("STREAMLIT_PASSWORD")
@@ -101,13 +104,14 @@ engine = create_engine(f'postgresql://{user}:{db_password}@{host}:{port}/{dbname
 Session = sessionmaker(bind=engine)
 session = Session()
 
-# Create the engine and session for the dashboard database
-engine_dashboard = create_engine(f'postgresql://{user_dashboard}:{db_password_dashboard}@{host_dashboard_db}:{port_dashboard}/{dbname_dashboard}')
-Session_dashboard = sessionmaker(bind=engine_dashboard)
-session_dashboard = Session_dashboard()
+if not DEBUG:
+    # Create the engine and session for the dashboard database
+    engine_dashboard = create_engine(f'postgresql://{user_dashboard}:{db_password_dashboard}@{host_dashboard_db}:{port_dashboard}/{dbname_dashboard}')
+    Session_dashboard = sessionmaker(bind=engine_dashboard)
+    session_dashboard = Session_dashboard()
 
-Base.metadata.drop_all(engine_dashboard)  # Drop all tables
-Base.metadata.create_all(engine_dashboard)
+    Base.metadata.drop_all(engine_dashboard)  # Drop all tables
+    Base.metadata.create_all(engine_dashboard)
 
 
 # Helper function to fetch data from the database
@@ -278,8 +282,8 @@ def fetch_analyzed_data_grouped_by_date():
     df_analyzed_data['new_wallets_count'] = df_analyzed_data['new_wallets_count'].fillna(0)
     
     
-    
-    update_report_table(df_analyzed_data)
+    if not DEBUG:
+        update_report_table(df_analyzed_data)
     # Add a total row
     def add_total_row(df):
         total_row = {'insert_d': 'Total'}
@@ -903,7 +907,10 @@ def main():
 
     
     if 'auth' not in st.session_state:
-        st.session_state.auth = False
+        if DEBUG:
+            st.session_state.auth = True
+        else:
+            st.session_state.auth = False
 
     if not st.session_state.auth:
         password = st.text_input("🔑 Enter the password", type="password")
