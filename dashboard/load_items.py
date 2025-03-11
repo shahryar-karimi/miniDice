@@ -11,7 +11,6 @@ Base = declarative_base()
 def load_items():
     DEBUG = os.getenv("DEBUG")
     DEBUG = DEBUG.lower() == 'true'
-    print(DEBUG)
     # Set up environment variables
     host = os.getenv("POSTGRES_HOST")
     dbname = os.getenv("POSTGRES_DB")

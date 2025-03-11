@@ -201,6 +201,7 @@ def fetch_winners_grouped_by_date(session):
     query = session.query(
         func.date(Prediction.insert_dt).label('insert_dt'),
         func.count(distinct(Prediction.player_id)).label('number_of_winners'),
+        func.count(distinct(Player.wallet_address)).label('unique_wallets')
         func.array_agg(distinct(Player.wallet_address)).label('winners_wallet_addresses'),
         func.array_agg(distinct(Player.telegram_id)).label('winners_telegram_ids'),
         func.array_agg(distinct(Player.telegram_username)).label('winners_telegram_usernames')
@@ -855,14 +856,97 @@ def plot_histograms(df_analyzed_data, session):
     else:
         st.write("😢 No dice pair predictions found in the selected date range.")
         
-        
+        from plotly.subplots import make_subplots
+
+from plotly.subplots import make_subplots
+
 def plot_frequent_graphs(df_analyzed_data):
-    count_wallets = df_analyzed_data['count_wallets']
-    new_wallets = df_analyzed_data['new_wallets_count']
-    joined_players = df_analyzed_data['joined_players_count']
-    predictions = df_analyzed_data['predictions_count']
+    # Ensure 'insert_d' is a datetime object for filtering
+    df_analyzed_data['insert_d'] = pd.to_datetime(df_analyzed_data['insert_d'], errors='coerce')
+
+    # Ensure valid min and max dates for slider
+    min_date = df_analyzed_data['insert_d'].min()
+    max_date = df_analyzed_data['insert_d'].max()
+
+    if pd.isnull(min_date) or pd.isnull(max_date):
+        st.error("No valid dates available for plotting.")
+        return
+
+    min_date = min_date.to_pydatetime()
+    max_date = max_date.to_pydatetime()
+
+    # Create date range slider
+    start_date, end_date = st.slider(
+        "Select Date Range",
+        min_value=min_date,
+        max_value=max_date,
+        value=(min_date, max_date),
+        format="YYYY-MM-DD"
+    )
+
+    # Filter data within selected date range
+    filtered_data = df_analyzed_data[
+        (df_analyzed_data['insert_d'] >= pd.to_datetime(start_date)) &
+        (df_analyzed_data['insert_d'] <= pd.to_datetime(end_date))
+    ]
     
-    signals = [count_wallets, new_wallets, joined_players, predictions]
-    titles = ['Wallets', 'New Wallets', 'Joined Players', 'Predictions']
-    
-    
+    filtered_data['insert_d'] = filtered_data['insert_d'].dt.date  # Convert to date-only format
+
+    # Extract relevant columns (excluding the 'Total' row)
+    count_wallets = filtered_data['count_wallets']
+    new_wallets = filtered_data['new_wallets_count']
+    joined_players = filtered_data['joined_players_count']
+    predictions = filtered_data['predictions_count']
+    wallet_player_ratio = filtered_data['count_wallets'] / filtered_data['joined_players_count']
+    insert_d = filtered_data['insert_d']
+
+    # Define signals and their titles
+    signals = [count_wallets, new_wallets, joined_players, predictions, wallet_player_ratio]
+    titles = ['Wallets', 'New Wallets', 'Joined Players', 'Predictions', 'Wallet-Player Ratio']
+
+    # Calculate the number of rows needed (2 columns, so rows = ceil(number of signals / 2))
+    num_signals = len(signals)
+    num_rows = (num_signals + 1) // 2  # Ensure we round up
+
+    # Create subplots with dynamic rows and fixed columns
+    fig = make_subplots(
+        rows=num_rows,
+        cols=2,
+        subplot_titles=titles,
+        vertical_spacing=0.1,  # Adjust spacing between subplots
+        horizontal_spacing=0.1
+    )
+
+    # Add traces to the subplots
+    for i in range(num_signals):
+        row = (i // 2) + 1  # Determine row position
+        col = (i % 2) + 1   # Determine column position
+
+        # Add trace for each signal
+        fig.add_trace(
+            go.Scatter(
+                x=insert_d,
+                y=signals[i],
+                mode='lines+markers',
+                name=titles[i]
+            ),
+            row=row,
+            col=col
+        )
+
+    # Update layout for subplots
+    fig.update_layout(
+        title="Frequent Graphs",
+        template="plotly_dark",
+        showlegend=False,  # Disable legend for cleaner look
+        height=300 * num_rows,  # Adjust height based on number of rows
+    )
+
+    # Add axis titles
+    for i in range(num_signals):
+        row = (i // 2) + 1
+        col = (i % 2) + 1
+        fig.update_yaxes(title_text=titles[i], row=row, col=col)
+
+    # Display the plot
+    st.plotly_chart(fig)
