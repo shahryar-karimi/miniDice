@@ -2,7 +2,7 @@ import streamlit as st
 
 from load_items import load_items
 DEBUG, STREAMLIT_PASSWORD, session, session_dashboard, llm = load_items()
-from pages import data_sheets_page, giveaways_page, graphs_page, histograms_page, wallet_info_page, player_info_page, success_story_page, assets_page
+from pages import data_sheets_page, giveaways_page, graphs_page, histograms_page, wallet_info_page, player_info_page, success_story_page, assets_page, frequent_graphs_page
 
 
 def main():
@@ -25,9 +25,10 @@ def main():
 
         # Sidebar navigation
         if 'page' not in st.session_state:
-            st.session_state.page = "Data Sheets"
+            st.session_state.page = "Frequent Graphs"
 
         page_options = {
+            "Frequent Graphs": lambda: frequent_graphs_page(session, session_dashboard, DEBUG),
             "Data Sheets": lambda: data_sheets_page(session, session_dashboard, DEBUG),
             "Giveaways": lambda: giveaways_page(session),
             "Graphs": lambda: graphs_page(session, session_dashboard, DEBUG),
