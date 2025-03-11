@@ -2,7 +2,7 @@ import os
 import pandas as pd
 import streamlit as st
 from datetime import datetime, timedelta
-from sqlalchemy import create_engine, Column, Integer, BigInteger, String, DateTime, ForeignKey, func, distinct, case, desc, Float, select
+from sqlalchemy import create_engine, Column, Integer, BigInteger, String, DateTime, ForeignKey, func, distinct, case, desc, Float, DECIMAL
 from sqlalchemy.orm import sessionmaker, relationship, declarative_base
 import plotly.graph_objects as go
 import sympy as sp
@@ -78,6 +78,9 @@ class Asset(Base):
     symbol = Column(String)
     balance = Column(BigInteger)
     decimal = Column(Integer)
+    master_address = Column(String)
+    usd_value = Column(Float)
+    price = Column(Float)
     
   
   
@@ -880,6 +883,7 @@ def assets_section():
     query = session.query(
         Asset.symbol,
         func.count(Asset.id).label('total_repeats'),
+        func.avg(Asset.price).label('average_price')
     ).group_by(Asset.symbol).order_by(desc('total_repeats'))
     
     st.write("💰 **Table of All Assets**")
@@ -900,6 +904,57 @@ def assets_section():
     st.write(f'Inactive wallets: {inactive_wallets}')
     st.write(f'Active wallets ratio: {100 * round(ratio_active_wallets, 4)} \%')
     st.write(f'Inactive wallets ratio: {100 * round(ratio_inactive_wallets, 4)} \%')
+
+    
+    st.markdown('---')
+    st.write("💵 **USD Value of Each Player - Sorted**")
+    
+    
+    player_assets_query = session.query(
+        Player.telegram_id,
+        Player.telegram_username,
+        Player.first_name,
+        func.sum(Asset.usd_value).label('total_usd_value'),
+        Player.wallet_address
+    ).join(Asset, Player.telegram_id == Asset.player_id) \
+        .group_by(Player.telegram_id) \
+        .order_by(desc('total_usd_value'))
+    
+    player_assets_df = fetch_data(player_assets_query)
+    st.dataframe(player_assets_df)
+    
+    
+    total_usd_values = player_assets_df['total_usd_value']
+    
+    # histogram
+    interval = st.number_input("Select interval size for histogram", min_value=0.1, value=0.2, step=0.1)
+    maximum = st.number_input("Select maximum value for histogram", min_value=0, value=100, step=1)
+    filtered_usd_values = total_usd_values[total_usd_values <= maximum]
+    total_discarded_values = len(total_usd_values) - len(filtered_usd_values)
+    st.write(f'Max is {total_usd_values.max()}')
+    st.write(f'{total_discarded_values} values are discarded')
+    fig_usd_histogram = go.Figure()
+
+    fig_usd_histogram.add_trace(go.Histogram(
+        x=filtered_usd_values,
+        xbins=dict(
+            start=0,
+            end=maximum,
+            size=interval  # 5 USD intervals
+        ),
+        marker_color='#1f77b4',
+        opacity=0.75
+    ))
+
+    fig_usd_histogram.update_layout(
+        title="Histogram of USD Value of Each Player",
+        xaxis_title="Total USD Value",
+        yaxis_title="Frequency",
+        template="plotly_dark",
+        showlegend=False
+    )
+
+    st.plotly_chart(fig_usd_histogram)
 
 
 
