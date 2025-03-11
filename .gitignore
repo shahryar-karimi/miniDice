@@ -161,3 +161,6 @@ cython_debug/
 
 # django
 */migrations/*
+
+# macos
+.DS_Store
