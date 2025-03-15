@@ -1,5 +1,5 @@
-# Use Python 3.11 slim image as base
-FROM python:3.11-slim
+# Use Python 3.12 slim image as base
+FROM python:3.12-slim
 
 # Set environment variables
 ENV PYTHONDONTWRITEBYTECODE=1 \
@@ -7,22 +7,20 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
     DEBIAN_FRONTEND=noninteractive
 
 # Set working directory
-WORKDIR /app
+WORKDIR /app/services
 
 # Install system dependencies
 RUN apt-get update && apt-get install -y --no-install-recommends \
+    gcc \
     build-essential \
-    libpq-dev \
     && rm -rf /var/lib/apt/lists/*
 
-# Copy requirements first to leverage Docker cache
-COPY reqs.txt .
+# Copy only the requirements first to leverage Docker cache
+COPY services/requirements.txt .
+RUN pip install --no-cache-dir -r requirements.txt
 
-# Install Python dependencies
-RUN pip install --no-cache-dir -r reqs.txt
-
-# Copy the application code
-COPY ./ ./
+# Copy service files
+COPY services/ .
 
 # Create necessary directories for data persistence
 RUN mkdir -p /app/data
@@ -31,5 +29,5 @@ RUN mkdir -p /app/data
 ENV INPUT_DIR=/app/data \
     OUTPUT_DIR=/app/data
 
-# Set default command
-CMD ["python", "analyze_wallets.py", "-i", "/app/data/wallets.json", "-o", "/app/data/wallet_analysis.json"]
+# Set the default command to help text
+CMD ["python", "-c", "print('Available scripts:\\n- analyze_wallets.py\\n- find_wallets.py\\n- transactions.py\\nRun with: docker run <image> python <script_name> [args]')"]
