@@ -42,18 +42,18 @@ async def broadcast_message():
         
     for recipient in recipients:
         try:
-            message = f"""Hey f{recipient['first_name']}, 👀🎲
-            🎉 Congrats, Dice Master!
+            message = f"""Hey {recipient['first_name']}, 👀🎲
+🎉 Congrats, Dice Master!
 
-            Check your wallet—your UPD Dice Passport has arrived! 🎲🚀
+Check your wallet—your UPD Dice Passport has arrived! 🎲🚀
 
-            You’re now part of an exclusive group shaping the UNITED PLAYGROUNDS OF DICE MANICAS.  Big things are coming… and you’re in. 👀
+You’re now part of an exclusive group shaping the UNITED PLAYGROUNDS OF DICE MANICAS.  Big things are coming… and you’re in. 👀
 
-            Stay sharp, stay ahead—the leaderboard is always watching.
+Stay sharp, stay ahead—the leaderboard is always watching.
 
-            Dicemaniacs Passport 
+Dicemaniacs Passport 
 
-            #DiceManiacs #DicePassport #UPD"""
+#DiceManiacs #DicePassport #UPD"""
             await bot.send_message(chat_id=recipient['telegram_id'], text=message)
             # await bot.send_photo(chat_id=recipient['telegram_id'], photo="./data/media/5904615795118425431.jpg",
             #                    caption=message)
