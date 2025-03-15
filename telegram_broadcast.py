@@ -38,7 +38,7 @@ def read_recipients():
 async def get_players():
     recipients = read_recipients()
     return list(await sync_to_async(
-        lambda: list(Player.objects.filter(telegram_id__in=[150342867, 426083623]).exclude(telegram_id__in=recipients)),
+        lambda: list(Player.objects.all().exclude(telegram_id__in=recipients)),
         thread_sensitive=True
     )())
 
@@ -54,16 +54,17 @@ async def broadcast_message():
     for player in players:
         try:
             message = f"""<b>Hey {player.first_name}</b>, 👀🎲
-🎉 <b>Congrats, Dice Master!</b>
 
-Check your wallet—your <b>UPD Dice Passport</b> has arrived! 🎲🚀
+The <b>top 100 players</b> just claimed their <b>Dice Passport NFT!</b> 🚀 But the game isn’t over yet…
 
-You’re now part of an exclusive group shaping the <b>UNITED PLAYGROUNDS OF DICE MANIACS</b>.  Big things are coming… and you’re in. 👀
+Some NFTs are still <b>up for grabs</b>—and <b>you can claim them!</b>
 
-<b>Stay sharp</b>, stay ahead—the leaderboard is always watching.
+Keep playing, stay on the <b>leaderboard</b>, and you might be next. 
+
+<b>Will you make the cut?</b> 💰🔥
+
 
 <a href='https://getgems.io/collection/EQAHvaW_p0tBOPI9Z74k6UgyLbox-FitPx1ixbRln7ZFyOrZ#activity'>Dicemaniacs Passport</a>
-
 #DiceManiacs #DicePassport #UPD"""
             await bot.send_message(chat_id=player.telegram_id, text=message, parse_mode="HTML")
             # await bot.send_photo(chat_id=recipient['telegram_id'], photo="./data/media/5904615795118425431.jpg",
