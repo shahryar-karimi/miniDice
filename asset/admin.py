@@ -7,20 +7,13 @@ from user.models import Player
 
 @admin.register(Asset)
 class AssetAdmin(admin.ModelAdmin):
-    list_display = ["player", "symbol", "balance", "decimal", "price", "usd", "update_dt"]
+    list_display = ["player", "symbol", "balance", "decimal", "price", "usd_value", "update_dt"]
     list_filter = ["symbol"]
     search_fields = ["player__telegram_id", "player__telegram_username", "player__first_name"]
     actions = ["sync_assets"]
 
-    @admin.display(description='usd')
-    def usd(self, obj):
-        if obj.usd_value is None or obj.usd_value == 0:
-            obj.set_usd_value()
-        return obj.usd_value
-
-    usd.short_description = 'usd value'
-
     def sync_assets(self, request, queryset):
+        Asset.objects.all().delete()
         players = Player.objects.filter(wallet_address__isnull=False)
         for player in players:
             assets = {}

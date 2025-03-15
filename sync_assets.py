@@ -9,6 +9,7 @@ from services.ton_services import get_balance
 
 
 def sync_assets():
+    Asset.objects.all().delete()
     players = Player.objects.filter(wallet_address__isnull=False)
     for player in players:
         assets = {}

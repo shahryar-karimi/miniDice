@@ -4,5 +4,5 @@ sqlalchemy==2.0.38
 plotly==6.0.0
 sympy==1.13.3
 langchain-openai==0.3.7
-dotenv==1.0.1
 pyperclip==1.9.0
+python-dotenv==1.0.1
