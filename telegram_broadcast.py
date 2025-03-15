@@ -69,7 +69,6 @@ Keep playing, stay on the <b>leaderboard</b>, and you might be next.
             await bot.send_message(chat_id=player.telegram_id, text=message, parse_mode="HTML")
             # await bot.send_photo(chat_id=recipient['telegram_id'], photo="./data/media/5904615795118425431.jpg",
             #                    caption=message)
-            print(f"Successfully sent message to {player.first_name} (ID: {player.telegram_id})")
         except Exception as e:
             print(f"Failed to send message to {player.first_name} (ID: {player.telegram_id}): {e}")
 
