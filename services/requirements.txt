@@ -1,0 +1,5 @@
+requests==2.31.0
+tqdm==4.66.2
+names==0.3.0
+pytonlib==0.0.64
+python-dotenv==1.0.1 
