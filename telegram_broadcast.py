@@ -20,15 +20,15 @@ def read_recipients():
     with open(csv_file, 'r', encoding='utf-8') as f:
         csv_reader = csv.DictReader(f)
         # Verify required columns exist
-        required_columns = {'telegram_id', 'first_name'}
+        required_columns = {'Telegram ID', 'First Name'}
         if not required_columns.issubset(csv_reader.fieldnames):
             missing = required_columns - set(csv_reader.fieldnames)
             raise ValueError(f"Missing required columns in CSV: {missing}")
             
         for row in csv_reader:
             recipients.append({
-                'telegram_id': row['telegram_id'].strip(),
-                'first_name': row['first_name'].strip()
+                'telegram_id': row['Telegram ID'].strip(),
+                'first_name': row['First Name'].strip()
             })
     return recipients
 
