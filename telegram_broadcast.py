@@ -42,17 +42,21 @@ async def broadcast_message():
         
     for recipient in recipients:
         try:
-            message = f"""🎉 Hello {recipient['first_name']}, NEW Dice Maniacs Citizen! 🎲
+            message = f"""Hey f{recipient['first_name']}, 👀🎲
+            🎉 Congrats, Dice Master!
 
-You've joined through a recommendation, and we've got AMAZING things waiting for you in Dice Land! 🌍✨
+            Check your wallet—your UPD Dice Passport has arrived! 🎲🚀
 
-🚨$20 Retention Bonus and $30 Referral Bonus are just the beginning! And don't forget about the $100 prize every night! 💰🔥
+            You’re now part of an exclusive group shaping the UNITED PLAYGROUNDS OF DICE MANICAS.  Big things are coming… and you’re in. 👀
 
-Connect your wallet to start your adventure and claim your rewards! 🔗🚀
+            Stay sharp, stay ahead—the leaderboard is always watching.
 
-Come back and join the fun—the experience is just starting! 🎉🎲"""
-            await bot.send_photo(chat_id=recipient['telegram_id'], photo="./data/media/5904615795118425431.jpg",
-                               caption=message)
+            Dicemaniacs Passport 
+
+            #DiceManiacs #DicePassport #UPD"""
+            await bot.send_message(chat_id=recipient['telegram_id'], text=message)
+            # await bot.send_photo(chat_id=recipient['telegram_id'], photo="./data/media/5904615795118425431.jpg",
+            #                    caption=message)
             print(f"Successfully sent message to {recipient['first_name']} (ID: {recipient['telegram_id']})")
         except Exception as e:
             print(f"Failed to send message to {recipient['first_name']} (ID: {recipient['telegram_id']}): {e}")
