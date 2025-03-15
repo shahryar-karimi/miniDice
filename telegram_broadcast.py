@@ -1,62 +1,55 @@
 import asyncio
 import os
-from datetime import timedelta
+from pathlib import Path
 
 import django
-from asgiref.sync import sync_to_async
-from django.utils import timezone
+from telegram import Bot
 
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'miniDice.settings')
 django.setup()
-from user.models import Player
 from django.conf import settings
-from telegram import Bot
 
-
-async def get_players():
-    three_days_ago_midnight = (timezone.now() - timedelta(days=3)).replace(hour=0, minute=0, second=0, microsecond=0)
-    selected_players = await sync_to_async(list)(
-        Player.objects.filter(referrals__insert_dt__gt=three_days_ago_midnight)
-    )
-    return selected_players
-
-
-async def get_all_players():
-    return await sync_to_async(list)(Player.objects.all().order_by('telegram_id'))
-
-
-async def get_non_russian():
-    return await sync_to_async(list)(Player.objects.all().exclude(telegram_language_code="ru").order_by('telegram_id'))
-
-
-async def get_russian():
-    return await sync_to_async(list)(Player.objects.filter(telegram_language_code="ru").order_by('telegram_id'))
-
+def read_recipients():
+    """Read recipient telegram IDs from recipients.txt file"""
+    recipients_file = Path(__file__).parent / 'recipients.txt'
+    if not recipients_file.exists():
+        raise FileNotFoundError("recipients.txt file not found! Please create it with telegram IDs.")
+    
+    with open(recipients_file, 'r') as f:
+        # Read lines and filter out comments and empty lines
+        telegram_ids = [
+            line.strip() for line in f
+            if line.strip() and not line.strip().startswith('#')
+        ]
+    return telegram_ids
 
 async def broadcast_message():
     bot = Bot(token=settings.TELEGRAM_BOT_TOKEN)
-    players = await get_players()
-    for player in players:
+    telegram_ids = read_recipients()
+    
+    if not telegram_ids:
+        print("No recipients found in recipients.txt file!")
+        return
+        
+    for telegram_id in telegram_ids:
         try:
             message = f"""🎉Hello, NEW Dice Maniacs Citizen! 🎲
 
-You’ve joined through a recommendation, and we’ve got AMAZING things waiting for you in Dice Land! 🌍✨
+You've joined through a recommendation, and we've got AMAZING things waiting for you in Dice Land! 🌍✨
 
-🚨$20 Retention Bonus and $30 Referral Bonus are just the beginning! And don’t forget about the $100 prize every night! 💰🔥
+🚨$20 Retention Bonus and $30 Referral Bonus are just the beginning! And don't forget about the $100 prize every night! 💰🔥
 
 Connect your wallet to start your adventure and claim your rewards! 🔗🚀
 
 Come back and join the fun—the experience is just starting! 🎉🎲"""
-            await bot.send_photo(chat_id=player.telegram_id, photo="./data/media/5904615795118425431.jpg",
-                                 caption=message)
-            # await bot.send_video(chat_id=player.telegram_id, video="./data/media/Trump_meme.MOV", caption=message)
+            await bot.send_photo(chat_id=telegram_id, photo="./data/media/5904615795118425431.jpg",
+                               caption=message)
+            print(f"Successfully sent message to {telegram_id}")
         except Exception as e:
-            print(f"Failed to send message to {player.telegram_id}: {e}")
-
+            print(f"Failed to send message to {telegram_id}: {e}")
 
 def main():
     asyncio.run(broadcast_message())
 
-
 if __name__ == '__main__':
-    main()
+    main() 

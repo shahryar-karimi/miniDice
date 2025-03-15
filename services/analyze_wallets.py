@@ -1,10 +1,20 @@
 import json
 import os
 import time
-from typing import Dict, List
+from typing import Dict, List, Any
+from decimal import Decimal
 from tqdm import tqdm
 import argparse
 from ton_services import get_balance
+
+
+class DecimalEncoder(json.JSONEncoder):
+    """Custom JSON encoder to handle Decimal objects."""
+    def default(self, obj):
+        if isinstance(obj, Decimal):
+            return float(obj)
+        return super().default(obj)
+
 
 def load_input_wallets(input_file: str) -> List[Dict]:
     """Load wallet addresses from input file."""
@@ -25,6 +35,7 @@ def load_input_wallets(input_file: str) -> List[Dict]:
                 json.dump({"addresses": []}, f, indent=2)
             return []
 
+
 def load_existing_analysis(output_file: str) -> Dict[str, Dict]:
     """Load existing analysis results if available."""
     if os.path.exists(output_file):
@@ -36,11 +47,26 @@ def load_existing_analysis(output_file: str) -> Dict[str, Dict]:
                 return {}
     return {}
 
+
 def save_analysis(analysis: Dict, output_file: str) -> None:
-    """Save analysis results to file."""
+    """Save analysis results to file using custom JSON encoder for Decimal values."""
     os.makedirs(os.path.dirname(output_file) or '.', exist_ok=True)
     with open(output_file, 'w') as f:
-        json.dump(analysis, f, indent=2)
+        json.dump(analysis, f, indent=2, cls=DecimalEncoder)
+
+
+def process_wallet_data(wallet_data: Dict[str, Any]) -> Dict[str, Any]:
+    """Process wallet data to ensure all values are JSON serializable."""
+    processed_data = {}
+    for key, value in wallet_data.items():
+        if isinstance(value, dict):
+            processed_data[key] = process_wallet_data(value)
+        elif isinstance(value, Decimal):
+            processed_data[key] = float(value)
+        else:
+            processed_data[key] = value
+    return processed_data
+
 
 def analyze_wallets(input_file: str = "ton_wallets.json", 
                    output_file: str = "wallet_analysis.json",
@@ -77,9 +103,12 @@ def analyze_wallets(input_file: str = "ton_wallets.json",
                 # Get wallet balance and token information
                 balance_info = get_balance(address)
                 if balance_info:
+                    # Process the data to handle Decimal values
+                    processed_balance_info = process_wallet_data(balance_info)
+                    
                     analysis[address] = {
                         "name": wallet.get("name", ""),
-                        "balances": balance_info,
+                        "balances": processed_balance_info,
                         "last_updated": time.strftime("%Y-%m-%d %H:%M:%S")
                     }
                     pbar.update(1)
@@ -90,7 +119,7 @@ def analyze_wallets(input_file: str = "ton_wallets.json",
                     print(f"\nSaved progress: {len(analysis)} wallets analyzed")
                     
             except Exception as e:
-                print(f"\nError analyzing wallet {address}: {e}")
+                print(f"\nError analyzing wallet {address}: {str(e)}")
                 continue
                 
     except KeyboardInterrupt:
@@ -101,6 +130,7 @@ def analyze_wallets(input_file: str = "ton_wallets.json",
         
     print(f"\nAnalysis complete. Processed {len(analysis)} wallets")
     print(f"Results saved to {output_file}")
+
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Analyze TON wallets and their token balances')
