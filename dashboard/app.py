@@ -10,8 +10,7 @@ from pages import (
     player_info_page,
     success_story_page,
     assets_page,
-    frequent_graphs_page,
-    tgstat_analytics_page
+    frequent_graphs_page
 )
 
 
@@ -47,7 +46,7 @@ def main():
             "Player Information": lambda: player_info_page(session),
             "Success Story": lambda: success_story_page(session, llm),
             "Assets": lambda: assets_page(session),
-            "TGStat Analytics": lambda: tgstat_analytics_page(session, TGSTAT_APIKEY),
+            # "TGStat Analytics": lambda: tgstat_analytics_page(session, TGSTAT_APIKEY),
             # "Test": lambda: test_page()
         }
 
