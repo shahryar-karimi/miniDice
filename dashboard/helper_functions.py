@@ -6,6 +6,7 @@ import streamlit as st
 import sympy as sp
 import random
 import plotly.graph_objects as go
+from plotly.subplots import make_subplots
 
 
 # Helper function to fetch data from the database
@@ -779,7 +780,23 @@ def plot_graphs(df_analyzed_data):
 
 
 
-def plot_histograms(df_analyzed_data, session):
+def fetch_hours_histogram(session):
+    # Extract hour from insert_dt and group by hour
+    hour_query = session.query(
+        func.extract('hour', Prediction.insert_dt).label('hour'),
+        func.count(Prediction.id).label('count')
+    ).group_by(
+        func.extract('hour', Prediction.insert_dt)
+    ).order_by(
+        func.extract('hour', Prediction.insert_dt)
+    )
+
+    # Fetch the result as a DataFrame
+    df_hours_histogram = fetch_data(hour_query, session)
+    return df_hours_histogram
+
+
+def plot_histograms(df_analyzed_data, df_hours, session):
      # New Section: Histogram of Dice Pairs
     st.header("🎲 Dice Pair Predictions Histogram")
     df_analyzed_data['insert_d'] = pd.to_datetime(df_analyzed_data['insert_d'], errors='coerce')
@@ -831,34 +848,53 @@ def plot_histograms(df_analyzed_data, session):
         merged_df['dice_pair'] = pd.Categorical(merged_df['dice_pair'], categories=ordered_dice_pairs, ordered=True)
         merged_df = merged_df.sort_values('dice_pair')
 
-        # Plot histogram
-        fig_dice = go.Figure()
+        # Plot histogram 
+        fig = make_subplots(
+            rows=2, cols=1,
+            subplot_titles=[
+                f"Histogram of Dice Pairs from {start_date.date()} to {end_date.date()}",
+                "Hourly Predictions Count"
+            ],
+            vertical_spacing=0.35   
+        )
 
-        fig_dice.add_trace(go.Bar(
+        # First histogram for dice pairs
+        fig.add_trace(go.Bar(
             x=merged_df['dice_pair'],
             y=merged_df['count'],
             name="Dice Pairs",
             marker_color='#1f77b4',
             opacity=0.75
-        ))
+        ), row=1, col=1)
 
-        # Update layout
-        fig_dice.update_layout(
-            title=f"Histogram of Dice Pairs from {start_date.date()} to {end_date.date()}",
-            xaxis_title="Dice Pair",
-            yaxis_title="Frequency",
+        # Second histogram for hourly predictions count
+        fig.add_trace(go.Bar(
+            x=df_hours['hour'],
+            y=df_hours['count'],
+            name="Hourly Predictions",
+            marker_color='#ff7f0e',
+            opacity=0.75
+        ), row=2, col=1)
+
+        # Update layout for both histograms
+        fig.update_layout(
+            title="Dice Pairs and Hourly Predictions Histogram",
             template="plotly_dark",
-            showlegend=True,
+            showlegend=False,
             bargap=0.1
         )
 
-        st.plotly_chart(fig_dice)
+        fig.update_xaxes(title_text="Dice Pair", row=1, col=1)
+        fig.update_yaxes(title_text="Frequency", row=1, col=1)
+
+        fig.update_xaxes(title_text="Hour of Day", row=2, col=1)
+        fig.update_yaxes(title_text="Count", row=2, col=1)
+
+        st.plotly_chart(fig)
     else:
         st.write("😢 No dice pair predictions found in the selected date range.")
         
-        from plotly.subplots import make_subplots
 
-from plotly.subplots import make_subplots
 
 def plot_frequent_graphs(df_analyzed_data):
     # Ensure 'insert_d' is a datetime object for filtering

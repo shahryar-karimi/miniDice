@@ -1,5 +1,6 @@
 import streamlit as st
-from helper_functions import fetch_analyzed_data_grouped_by_date, fetch_winners_grouped_by_date, fetch_data_for_date, plot_graphs, plot_histograms, extract_wallet_information, extract_player_information, success_story, assets_section, player_giveaway, referrer_giveaway, plot_frequent_graphs
+import streamlit.components.v1 as components
+from helper_functions import fetch_analyzed_data_grouped_by_date, fetch_winners_grouped_by_date, fetch_data_for_date, plot_graphs, plot_histograms, extract_wallet_information, extract_player_information, success_story, assets_section, player_giveaway, referrer_giveaway, plot_frequent_graphs, fetch_hours_histogram
 from datetime import datetime, timedelta
 
 # Page Functions
@@ -33,7 +34,8 @@ def graphs_page(session, session_dashboard, DEBUG):
 def histograms_page(session, session_dashboard, DEBUG):
     st.title("📊 Histograms")
     df_analyzed_data = fetch_analyzed_data_grouped_by_date(session, session_dashboard, DEBUG)
-    plot_histograms(df_analyzed_data, session)
+    df_hours = fetch_hours_histogram(session)
+    plot_histograms(df_analyzed_data, df_hours, session)
     
 
 def wallet_info_page(session):
@@ -61,3 +63,10 @@ def frequent_graphs_page(session, session_dashboard, DEBUG):
     st.title("📈 Frequent Graphs")
     df_analyzed_data = fetch_analyzed_data_grouped_by_date(session, session_dashboard, DEBUG)
     plot_frequent_graphs(df_analyzed_data)
+    
+    
+def test_page():
+    st.title("Test Page")
+    st.image("https://tgstat.ru/channel/@dicemaniacs/stat-widget.png")
+
+    
