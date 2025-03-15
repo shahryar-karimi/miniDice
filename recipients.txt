@@ -1,0 +1,5 @@
+# Add telegram IDs here, one per line
+# Example:
+# 123456789
+# 987654321 
+150342867 
