@@ -1008,176 +1008,176 @@ def plot_frequent_graphs(df_analyzed_data):
     # Display the plot
     st.plotly_chart(fig)
     
-def plot_tgstat_channel_info(client, channel: str):
-    """Plot basic channel information from TGStat"""
-    st.header("📈 Channel Information")
-    channel_info = client.get_channel_info(channel)
-    if channel_info.get('status') == 'ok':
-        data = channel_info['response']
-        col1, col2, col3 = st.columns(3)
+# def plot_tgstat_channel_info(client, channel: str):
+#     """Plot basic channel information from TGStat"""
+#     st.header("📈 Channel Information")
+#     channel_info = client.get_channel_info(channel)
+#     if channel_info.get('status') == 'ok':
+#         data = channel_info['response']
+#         col1, col2, col3 = st.columns(3)
         
-        with col1:
-            st.metric("Subscribers", data.get('participants_count', 0))
-        with col2:
-            st.metric("Category", data.get('category', 'N/A'))
-        with col3:
-            st.metric("Language", data.get('language', 'N/A'))
+#         with col1:
+#             st.metric("Subscribers", data.get('participants_count', 0))
+#         with col2:
+#             st.metric("Category", data.get('category', 'N/A'))
+#         with col3:
+#             st.metric("Language", data.get('language', 'N/A'))
             
-        st.markdown("---")
-        st.markdown("**Channel Details**")
-        st.markdown(f"**Title:** {data.get('title', 'N/A')}")
-        st.markdown(f"**Username:** {data.get('username', 'N/A')}")
-        st.markdown(f"**Link:** {data.get('link', 'N/A')}")
-        if data.get('about'):
-            st.markdown(f"**About:** {data['about']}")
-    else:
-        st.error(f"❌ Failed to fetch channel information: {channel_info.get('error', 'Unknown error')}")
+#         st.markdown("---")
+#         st.markdown("**Channel Details**")
+#         st.markdown(f"**Title:** {data.get('title', 'N/A')}")
+#         st.markdown(f"**Username:** {data.get('username', 'N/A')}")
+#         st.markdown(f"**Link:** {data.get('link', 'N/A')}")
+#         if data.get('about'):
+#             st.markdown(f"**About:** {data['about']}")
+#     else:
+#         st.error(f"❌ Failed to fetch channel information: {channel_info.get('error', 'Unknown error')}")
 
-def plot_tgstat_channel_stats(client, channel: str):
-    """Plot channel statistics from TGStat"""
-    st.header("📊 Channel Statistics")
-    stats = client.get_channel_stats(channel)
-    if stats.get('status') == 'ok':
-        data = stats['response']
+# def plot_tgstat_channel_stats(client, channel: str):
+#     """Plot channel statistics from TGStat"""
+#     st.header("📊 Channel Statistics")
+#     stats = client.get_channel_stats(channel)
+#     if stats.get('status') == 'ok':
+#         data = stats['response']
         
-        col1, col2, col3, col4 = st.columns(4)
-        with col1:
-            st.metric("ERR", f"{data.get('err_percent', 0)}%")
-        with col2:
-            st.metric("ER", f"{data.get('er_percent', 0)}%")
-        with col3:
-            st.metric("CI Index", data.get('ci_index', 0))
-        with col4:
-            st.metric("Daily Reach", data.get('daily_reach', 0))
+#         col1, col2, col3, col4 = st.columns(4)
+#         with col1:
+#             st.metric("ERR", f"{data.get('err_percent', 0)}%")
+#         with col2:
+#             st.metric("ER", f"{data.get('er_percent', 0)}%")
+#         with col3:
+#             st.metric("CI Index", data.get('ci_index', 0))
+#         with col4:
+#             st.metric("Daily Reach", data.get('daily_reach', 0))
             
-        st.markdown("---")
-        st.markdown("**Post Reach Statistics**")
-        col1, col2, col3 = st.columns(3)
-        with col1:
-            st.metric("12h Reach", data.get('adv_post_reach_12h', 0))
-        with col2:
-            st.metric("24h Reach", data.get('adv_post_reach_24h', 0))
-        with col3:
-            st.metric("48h Reach", data.get('adv_post_reach_48h', 0))
+#         st.markdown("---")
+#         st.markdown("**Post Reach Statistics**")
+#         col1, col2, col3 = st.columns(3)
+#         with col1:
+#             st.metric("12h Reach", data.get('adv_post_reach_12h', 0))
+#         with col2:
+#             st.metric("24h Reach", data.get('adv_post_reach_24h', 0))
+#         with col3:
+#             st.metric("48h Reach", data.get('adv_post_reach_48h', 0))
             
-        st.markdown("---")
-        st.markdown("**Engagement Metrics**")
-        col1, col2, col3 = st.columns(3)
-        with col1:
-            st.metric("Mentions", data.get('mentions_count', 0))
-        with col2:
-            st.metric("Forwards", data.get('forwards_count', 0))
-        with col3:
-            st.metric("Mentioning Channels", data.get('mentioning_channels_count', 0))
-    else:
-        st.error(f"❌ Failed to fetch channel statistics: {stats.get('error', 'Unknown error')}")
+#         st.markdown("---")
+#         st.markdown("**Engagement Metrics**")
+#         col1, col2, col3 = st.columns(3)
+#         with col1:
+#             st.metric("Mentions", data.get('mentions_count', 0))
+#         with col2:
+#             st.metric("Forwards", data.get('forwards_count', 0))
+#         with col3:
+#             st.metric("Mentioning Channels", data.get('mentioning_channels_count', 0))
+#     else:
+#         st.error(f"❌ Failed to fetch channel statistics: {stats.get('error', 'Unknown error')}")
 
-def plot_tgstat_subscribers_growth(client, channel: str):
-    """Plot subscribers growth graph from TGStat"""
-    st.header("👥 Subscribers Growth")
-    end_date = datetime.now()
-    start_date = end_date - timedelta(days=30)  # Last 30 days
+# def plot_tgstat_subscribers_growth(client, channel: str):
+#     """Plot subscribers growth graph from TGStat"""
+#     st.header("👥 Subscribers Growth")
+#     end_date = datetime.now()
+#     start_date = end_date - timedelta(days=30)  # Last 30 days
     
-    subscribers_data = client.get_channel_subscribers_graph(channel, start_date, end_date)
-    if subscribers_data.get('status') == 'ok':
-        data = subscribers_data['response']
+#     subscribers_data = client.get_channel_subscribers_graph(channel, start_date, end_date)
+#     if subscribers_data.get('status') == 'ok':
+#         data = subscribers_data['response']
         
-        fig = go.Figure()
-        dates = []
-        subscribers = []
-        for point in data:
-            try:
-                dates.append(datetime.fromtimestamp(point['timestamp']))
-                subscribers.append(point['participants_count'])
-            except (KeyError, TypeError):
-                continue
+#         fig = go.Figure()
+#         dates = []
+#         subscribers = []
+#         for point in data:
+#             try:
+#                 dates.append(datetime.fromtimestamp(point['timestamp']))
+#                 subscribers.append(point['participants_count'])
+#             except (KeyError, TypeError):
+#                 continue
         
-        fig.add_trace(go.Scatter(
-            x=dates,
-            y=subscribers,
-            mode='lines+markers',
-            name='Subscribers'
-        ))
+#         fig.add_trace(go.Scatter(
+#             x=dates,
+#             y=subscribers,
+#             mode='lines+markers',
+#             name='Subscribers'
+#         ))
         
-        fig.update_layout(
-            title="Subscribers Growth Over Time",
-            xaxis_title="Date",
-            yaxis_title="Subscribers Count",
-            template="plotly_dark"
-        )
+#         fig.update_layout(
+#             title="Subscribers Growth Over Time",
+#             xaxis_title="Date",
+#             yaxis_title="Subscribers Count",
+#             template="plotly_dark"
+#         )
         
-        st.plotly_chart(fig)
-    else:
-        st.error(f"❌ Failed to fetch subscribers growth data: {subscribers_data.get('error', 'Unknown error')}")
+#         st.plotly_chart(fig)
+#     else:
+#         st.error(f"❌ Failed to fetch subscribers growth data: {subscribers_data.get('error', 'Unknown error')}")
 
-def plot_tgstat_views_by_hours(client, channel: str):
-    """Plot views by hours distribution from TGStat"""
-    st.header("👀 Views by Hours")
-    views_by_hours = client.get_views_by_hours(channel)
-    if views_by_hours.get('status') == 'ok':
-        data = views_by_hours['response']
+# def plot_tgstat_views_by_hours(client, channel: str):
+#     """Plot views by hours distribution from TGStat"""
+#     st.header("👀 Views by Hours")
+#     views_by_hours = client.get_views_by_hours(channel)
+#     if views_by_hours.get('status') == 'ok':
+#         data = views_by_hours['response']
         
-        fig = go.Figure()
-        hours = list(range(24))
-        views = []
-        for hour in hours:
-            hour_data = data.get(str(hour), {})
-            if isinstance(hour_data, dict):
-                views.append(hour_data.get('views', 0))
-            else:
-                views.append(hour_data)  # If the API returns direct values
+#         fig = go.Figure()
+#         hours = list(range(24))
+#         views = []
+#         for hour in hours:
+#             hour_data = data.get(str(hour), {})
+#             if isinstance(hour_data, dict):
+#                 views.append(hour_data.get('views', 0))
+#             else:
+#                 views.append(hour_data)  # If the API returns direct values
         
-        fig.add_trace(go.Bar(
-            x=hours,
-            y=views,
-            name='Views'
-        ))
+#         fig.add_trace(go.Bar(
+#             x=hours,
+#             y=views,
+#             name='Views'
+#         ))
         
-        fig.update_layout(
-            title="Views Distribution by Hour",
-            xaxis_title="Hour of Day",
-            yaxis_title="Views Count",
-            template="plotly_dark"
-        )
+#         fig.update_layout(
+#             title="Views Distribution by Hour",
+#             xaxis_title="Hour of Day",
+#             yaxis_title="Views Count",
+#             template="plotly_dark"
+#         )
         
-        st.plotly_chart(fig)
-    else:
-        st.error(f"❌ Failed to fetch views by hours data: {views_by_hours.get('error', 'Unknown error')}")
+#         st.plotly_chart(fig)
+#     else:
+#         st.error(f"❌ Failed to fetch views by hours data: {views_by_hours.get('error', 'Unknown error')}")
 
-def plot_tgstat_audience_geography(client, channel: str):
-    """Plot audience geography information from TGStat"""
-    st.header("🌍 Audience Geography")
-    countries_data = client.get_countries(channel)
-    if countries_data.get('status') == 'ok':
-        data = countries_data['response']
+# def plot_tgstat_audience_geography(client, channel: str):
+#     """Plot audience geography information from TGStat"""
+#     st.header("🌍 Audience Geography")
+#     countries_data = client.get_countries(channel)
+#     if countries_data.get('status') == 'ok':
+#         data = countries_data['response']
         
-        # Create a DataFrame for the countries data
-        if isinstance(data, list):
-            countries_df = pd.DataFrame(data)
-        else:
-            # Handle the case where data is a dictionary
-            countries_df = pd.DataFrame([
-                {"name": country, "percent": percentage}
-                for country, percentage in data.items()
-            ])
+#         # Create a DataFrame for the countries data
+#         if isinstance(data, list):
+#             countries_df = pd.DataFrame(data)
+#         else:
+#             # Handle the case where data is a dictionary
+#             countries_df = pd.DataFrame([
+#                 {"name": country, "percent": percentage}
+#                 for country, percentage in data.items()
+#             ])
         
-        countries_df = countries_df.sort_values(by="percent", ascending=False)
+#         countries_df = countries_df.sort_values(by="percent", ascending=False)
         
-        st.dataframe(countries_df)
+#         st.dataframe(countries_df)
         
-        # Create a pie chart for top 10 countries
-        top_10_countries = countries_df.head(10)
-        fig = go.Figure(data=[go.Pie(
-            labels=top_10_countries['name'],
-            values=top_10_countries['percent'],
-            hole=.3
-        )])
+#         # Create a pie chart for top 10 countries
+#         top_10_countries = countries_df.head(10)
+#         fig = go.Figure(data=[go.Pie(
+#             labels=top_10_countries['name'],
+#             values=top_10_countries['percent'],
+#             hole=.3
+#         )])
         
-        fig.update_layout(
-            title="Top 10 Countries Distribution",
-            template="plotly_dark"
-        )
+#         fig.update_layout(
+#             title="Top 10 Countries Distribution",
+#             template="plotly_dark"
+#         )
         
-        st.plotly_chart(fig)
-    else:
-        st.error(f"❌ Failed to fetch audience geography data: {countries_data.get('error', 'Unknown error')}")
+#         st.plotly_chart(fig)
+#     else:
+#         st.error(f"❌ Failed to fetch audience geography data: {countries_data.get('error', 'Unknown error')}")

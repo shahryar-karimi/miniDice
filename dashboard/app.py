@@ -11,7 +11,6 @@ from pages import (
     success_story_page,
     assets_page,
     frequent_graphs_page,
-    test_page,
     tgstat_analytics_page
 )
 
