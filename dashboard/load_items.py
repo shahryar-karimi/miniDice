@@ -10,6 +10,7 @@ Base = declarative_base()
 
 def load_items():
     DEBUG = os.getenv("DEBUG")
+    TGSTAT_APIKEY = os.getenv("TGSTAT_APIKEY")
     DEBUG = DEBUG.lower() == 'true'
     # Set up environment variables
     host = os.getenv("POSTGRES_HOST")
@@ -42,5 +43,5 @@ def load_items():
     llm = ChatOpenAI(model="gpt-4o", api_key=API_KEY, temperature=0.3)        
 
     
-    return DEBUG, STREAMLIT_PASSWORD, session, session_dashboard, llm    
+    return DEBUG, STREAMLIT_PASSWORD, TGSTAT_APIKEY, session, session_dashboard, llm    
     

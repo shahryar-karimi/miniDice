@@ -1,7 +1,14 @@
+import sys
+import os
+
+# Add the parent directory to Python path to allow imports from miniDice
+sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
 import streamlit as st
 import streamlit.components.v1 as components
-from helper_functions import fetch_analyzed_data_grouped_by_date, fetch_winners_grouped_by_date, fetch_data_for_date, plot_graphs, plot_histograms, extract_wallet_information, extract_player_information, success_story, assets_section, player_giveaway, referrer_giveaway, plot_frequent_graphs, fetch_hours_histogram
+from helper_functions import fetch_analyzed_data_grouped_by_date, fetch_winners_grouped_by_date, fetch_data_for_date, plot_graphs, plot_histograms, extract_wallet_information, extract_player_information, success_story, assets_section, player_giveaway, referrer_giveaway, plot_frequent_graphs, fetch_hours_histogram, plot_tgstat_channel_info, plot_tgstat_channel_stats, plot_tgstat_subscribers_growth, plot_tgstat_views_by_hours, plot_tgstat_audience_geography
 from datetime import datetime, timedelta
+from libs.tgstat_client import TGStatClient
 
 # Page Functions
 def data_sheets_page(session, session_dashboard, DEBUG):
@@ -69,4 +76,13 @@ def test_page():
     st.title("Test Page")
     st.image("https://tgstat.ru/channel/@dicemaniacs/stat-widget.png")
 
+def tgstat_analytics_page(session, TGSTAT_APIKEY):
+    st.title("🔍 TGStat Analytics")
+    client = TGStatClient(TGSTAT_APIKEY)
+    plot_tgstat_channel_info(client, "dicemaniacs")
+    plot_tgstat_channel_stats(client, "dicemaniacs")
+    plot_tgstat_subscribers_growth(client, "dicemaniacs")
+    plot_tgstat_views_by_hours(client, "dicemaniacs")
+    plot_tgstat_audience_geography(client, "dicemaniacs")
+    
     
