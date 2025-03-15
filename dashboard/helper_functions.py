@@ -228,7 +228,6 @@ def fetch_data_for_date(selected_date, session):
 def player_giveaway(players, selected_date):
     if players:
         key = f'selected_player_{str(selected_date)}'
-        st.write("🎰 **20$ Prize**")
         if st.button("🎲 Select a Random Player from Selected Date's Predictions"):
             random_player = random.choice(players)
             st.session_state[key] = random_player
@@ -255,7 +254,6 @@ Wallet Address: {player.wallet_address}"""
 def referrer_giveaway(referrals, selected_date):
     if referrals:
         key = f'selected_referrer_{str(selected_date)}'
-        st.write("🎁 **30$ Prize**")
         if st.button("🎲 Select a Random Referrer from Selected Date's Referrals"):
             random_referrer = random.choice(referrals)
             st.session_state[key] = random_referrer

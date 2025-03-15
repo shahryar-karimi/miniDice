@@ -13,7 +13,6 @@ import pandas as pd
 import string
 from sqlalchemy import func, case, text, distinct
 from models import Player
-import pyperclip
 
 # Page Functions
 def data_sheets_page(session, session_dashboard, DEBUG):
@@ -31,11 +30,18 @@ def giveaways_page(session):
     st.title("🎁 Giveaways")
     default_date = datetime.today().date() - timedelta(days=1)
     selected_date = st.date_input("Select a date", value=default_date, max_value=datetime.today().date())
-    players, referrals = fetch_data_for_date(selected_date, session)
-    st.header("Player Giveaway")
-    player_giveaway(players, selected_date)
-    st.header("Referrer Giveaway")
-    referrer_giveaway(referrals, selected_date)
+    
+    tab1, tab2 = st.tabs(["🎮 Player Giveaway", "🤝 Referrer Giveaway"])
+    
+    with tab1:
+        st.write("🎰 **20$ Prize**")
+        players, _ = fetch_data_for_date(selected_date, session)
+        player_giveaway(players, selected_date)
+    
+    with tab2:
+        st.write("🎁 **30$ Prize**")
+        _, referrals = fetch_data_for_date(selected_date, session)
+        referrer_giveaway(referrals, selected_date)
 
 def graphs_page(session, session_dashboard, DEBUG):
     st.title("📈 Graphs")
@@ -287,10 +293,13 @@ def top_players_page(session):
                 st.write("📋 List of Unique Telegram IDs")
                 st.code(telegram_ids_text, language='text')
                 
-                # Add copy button for Telegram IDs
-                if st.button("Copy Telegram IDs"):
-                    pyperclip.copy(telegram_ids_text)
-                    st.toast("Telegram IDs copied to clipboard!")
+                # Use Streamlit's native clipboard solution
+                st.text_area(
+                    "Copy these IDs",
+                    value=telegram_ids_text,
+                    height=100,
+                    key="copy_telegram_ids"
+                )
             else:
                 st.warning("No matches found for any of the provided wallet addresses.")
     
