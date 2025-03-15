@@ -2,7 +2,7 @@ import streamlit as st
 
 from load_items import load_items
 DEBUG, STREAMLIT_PASSWORD, session, session_dashboard, llm = load_items()
-from pages import data_sheets_page, giveaways_page, graphs_page, histograms_page, wallet_info_page, player_info_page, success_story_page, assets_page, frequent_graphs_page
+from pages import data_sheets_page, giveaways_page, graphs_page, histograms_page, wallet_info_page, player_info_page, success_story_page, assets_page, frequent_graphs_page, test_page
 
 
 def main():
@@ -36,7 +36,8 @@ def main():
             "Wallet Information": lambda: wallet_info_page(session),
             "Player Information": lambda: player_info_page(session),
             "Success Story": lambda: success_story_page(session, llm),
-            "Assets": lambda: assets_page(session)
+            "Assets": lambda: assets_page(session),
+            # "Test": lambda: test_page()
         }
 
         selected_page = st.sidebar.selectbox(
