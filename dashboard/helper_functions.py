@@ -1181,3 +1181,73 @@ def plot_frequent_graphs(df_analyzed_data):
 #         st.plotly_chart(fig)
 #     else:
 #         st.error(f"❌ Failed to fetch audience geography data: {countries_data.get('error', 'Unknown error')}")
+
+def fetch_top_players(session, search_term=None, search_type=None):
+    """
+    Calculate points for each player based on:
+    - Base points: 5
+    - Mini app usage (auth_token not null): +10 points
+    - Wallet connected: +500 points
+    - Each win: +50 points
+    - Each prediction: +1 point
+    - Each referral: +5 points
+    
+    Args:
+        session: SQLAlchemy session
+        search_term: Optional search term for username or wallet address
+        search_type: Type of search ('username' or 'wallet')
+    """
+    
+    # Subquery for counting wins
+    wins_subquery = session.query(
+        Prediction.player_id,
+        func.count(Prediction.id).label('wins_count')
+    ).filter(Prediction.is_win == True).group_by(Prediction.player_id).subquery()
+    
+    # Subquery for counting predictions
+    predictions_subquery = session.query(
+        Prediction.player_id,
+        func.count(Prediction.id).label('predictions_count')
+    ).group_by(Prediction.player_id).subquery()
+    
+    # Subquery for counting referrals
+    referrals_subquery = session.query(
+        UserReferral.referrer_id,
+        func.count(UserReferral.id).label('referrals_count')
+    ).group_by(UserReferral.referrer_id).subquery()
+    
+    # Main query
+    query = session.query(
+        Player.telegram_id,
+        Player.telegram_username,
+        Player.first_name,
+        Player.wallet_address,
+        func.coalesce(wins_subquery.c.wins_count, 0).label('wins'),
+        func.coalesce(predictions_subquery.c.predictions_count, 0).label('predictions'),
+        func.coalesce(referrals_subquery.c.referrals_count, 0).label('referrals'),
+        (
+            5 +  # Base points
+            case(
+                (Player.wallet_address.isnot(None), 500),
+                else_=0
+            ) +  # Wallet points
+            (50 * func.coalesce(wins_subquery.c.wins_count, 0)) +  # Win points
+            func.coalesce(predictions_subquery.c.predictions_count, 0) +  # Prediction points
+            (5 * func.coalesce(referrals_subquery.c.referrals_count, 0))  # Referral points
+        ).label('points')
+    ).outerjoin(wins_subquery, Player.telegram_id == wins_subquery.c.player_id) \
+     .outerjoin(predictions_subquery, Player.telegram_id == predictions_subquery.c.player_id) \
+     .outerjoin(referrals_subquery, Player.telegram_id == referrals_subquery.c.referrer_id)
+    
+    # Apply search filters if provided
+    if search_term and search_type:
+        if search_type == 'username':
+            query = query.filter(Player.telegram_username.ilike(f'%{search_term}%'))
+        elif search_type == 'wallet':
+            query = query.filter(Player.wallet_address.ilike(f'%{search_term}%'))
+    
+    # Order by points and limit results
+    query = query.order_by(desc('points')).limit(100)
+    
+    df = fetch_data(query, session)
+    return df

@@ -4,10 +4,12 @@ FROM python:3.12-slim
 # Set environment variables
 ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1 \
-    DEBIAN_FRONTEND=noninteractive
+    DEBIAN_FRONTEND=noninteractive \
+    INPUT_DIR=/app/data \
+    OUTPUT_DIR=/app/data
 
 # Set working directory
-WORKDIR /app/services
+WORKDIR /app/
 
 # Install system dependencies
 RUN apt-get update && apt-get install -y --no-install-recommends \
@@ -16,18 +18,16 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     && rm -rf /var/lib/apt/lists/*
 
 # Copy only the requirements first to leverage Docker cache
-COPY services/requirements.txt .
+COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
 # Copy service files
-COPY services/ .
+COPY . .
 
-# Create necessary directories for data persistence
+# Create data directory and set it as a volume
 RUN mkdir -p /app/data
+VOLUME /app/data
 
-# Set environment variables for data directories
-ENV INPUT_DIR=/app/data \
-    OUTPUT_DIR=/app/data
-
-# Set the default command to help text
-CMD ["python", "-c", "print('Available scripts:\\n- analyze_wallets.py\\n- find_wallets.py\\n- transactions.py\\nRun with: docker run <image> python <script_name> [args]')"]
+# Set default command to analyze wallets with standard paths
+ENTRYPOINT ["python", "analyze_wallets.py"]
+CMD ["-i", "/app/data/ton_wallets.json", "-o", "/app/data/wallet_analysis.json"]
