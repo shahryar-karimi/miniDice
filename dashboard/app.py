@@ -37,7 +37,7 @@ def main():
             "Player Information": lambda: player_info_page(session),
             "Success Story": lambda: success_story_page(session, llm),
             "Assets": lambda: assets_page(session),
-            "Test": lambda: test_page()
+            # "Test": lambda: test_page()
         }
 
         selected_page = st.sidebar.selectbox(
