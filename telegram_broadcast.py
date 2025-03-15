@@ -1,6 +1,7 @@
 import asyncio
 import os
 from pathlib import Path
+import csv
 
 import django
 from telegram import Bot
@@ -10,30 +11,38 @@ django.setup()
 from django.conf import settings
 
 def read_recipients():
-    """Read recipient telegram IDs from recipients.txt file"""
-    recipients_file = Path(__file__).parent / 'recipients.txt'
-    if not recipients_file.exists():
-        raise FileNotFoundError("recipients.txt file not found! Please create it with telegram IDs.")
+    """Read recipient data from recipients.csv file"""
+    csv_file = Path(__file__).parent / 'export2.csv'
+    if not csv_file.exists():
+        raise FileNotFoundError("recipients.csv file not found! Please create it with telegram_id and first_name columns.")
     
-    with open(recipients_file, 'r') as f:
-        # Read lines and filter out comments and empty lines
-        telegram_ids = [
-            line.strip() for line in f
-            if line.strip() and not line.strip().startswith('#')
-        ]
-    return telegram_ids
+    recipients = []
+    with open(csv_file, 'r', encoding='utf-8') as f:
+        csv_reader = csv.DictReader(f)
+        # Verify required columns exist
+        required_columns = {'telegram_id', 'first_name'}
+        if not required_columns.issubset(csv_reader.fieldnames):
+            missing = required_columns - set(csv_reader.fieldnames)
+            raise ValueError(f"Missing required columns in CSV: {missing}")
+            
+        for row in csv_reader:
+            recipients.append({
+                'telegram_id': row['telegram_id'].strip(),
+                'first_name': row['first_name'].strip()
+            })
+    return recipients
 
 async def broadcast_message():
     bot = Bot(token=settings.TELEGRAM_BOT_TOKEN)
-    telegram_ids = read_recipients()
+    recipients = read_recipients()
     
-    if not telegram_ids:
-        print("No recipients found in recipients.txt file!")
+    if not recipients:
+        print("No recipients found in recipients.csv file!")
         return
         
-    for telegram_id in telegram_ids:
+    for recipient in recipients:
         try:
-            message = f"""🎉Hello, NEW Dice Maniacs Citizen! 🎲
+            message = f"""🎉 Hello {recipient['first_name']}, NEW Dice Maniacs Citizen! 🎲
 
 You've joined through a recommendation, and we've got AMAZING things waiting for you in Dice Land! 🌍✨
 
@@ -42,11 +51,11 @@ You've joined through a recommendation, and we've got AMAZING things waiting for
 Connect your wallet to start your adventure and claim your rewards! 🔗🚀
 
 Come back and join the fun—the experience is just starting! 🎉🎲"""
-            await bot.send_photo(chat_id=telegram_id, photo="./data/media/5904615795118425431.jpg",
+            await bot.send_photo(chat_id=recipient['telegram_id'], photo="./data/media/5904615795118425431.jpg",
                                caption=message)
-            print(f"Successfully sent message to {telegram_id}")
+            print(f"Successfully sent message to {recipient['first_name']} (ID: {recipient['telegram_id']})")
         except Exception as e:
-            print(f"Failed to send message to {telegram_id}: {e}")
+            print(f"Failed to send message to {recipient['first_name']} (ID: {recipient['telegram_id']}): {e}")
 
 def main():
     asyncio.run(broadcast_message())
