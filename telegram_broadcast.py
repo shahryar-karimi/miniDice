@@ -57,7 +57,7 @@ You’re now part of an exclusive group shaping the <b>UNITED PLAYGROUNDS OF DIC
 <a href='https://getgems.io/collection/EQAHvaW_p0tBOPI9Z74k6UgyLbox-FitPx1ixbRln7ZFyOrZ#activity'>Dicemaniacs Passport</a>
 
 #DiceManiacs #DicePassport #UPD"""
-            await bot.send_message(chat_id=recipient['telegram_id'], text=message)
+            await bot.send_message(chat_id=recipient['telegram_id'], text=message, parse_mode="HTML")
             # await bot.send_photo(chat_id=recipient['telegram_id'], photo="./data/media/5904615795118425431.jpg",
             #                    caption=message)
             print(f"Successfully sent message to {recipient['first_name']} (ID: {recipient['telegram_id']})")
