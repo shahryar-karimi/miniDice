@@ -405,84 +405,14 @@ def extract_wallet_information(session):
         if not players_with_wallet:
             st.write("😢 No players found with this wallet address.")
         else:
-            # Static Data: Calculate total wins and amount won
-            wins_all = 0
-            amount_won = 0
-
-            # Fetch winners grouped by date
-            winners_grouped = fetch_winners_grouped_by_date(session)
-            for _, row in winners_grouped.iterrows():
-                if wallet_address in row['winners_wallet_addresses']:
-                    wins = row['winners_wallet_addresses'].count(wallet_address)
-                    wins_all += wins
-                    amount_won += wins * row['amount_per_winner']
-
-            st.write("📊 **Static Data**")
-            st.write(f"🏆 Winning predictions count: {wins_all}")
-            st.write(f"💰 Amount won: {round(amount_won, 2)}")
-
-            # Players connected to this wallet address
-            st.markdown('---')
-            st.write("👥 **Players Connected to this Wallet**")
-            players_df = pd.DataFrame([{
-                'Telegram ID': player.telegram_id,
-                'Username': player.telegram_username,
-                'First Name': player.first_name,
-                'Wallet Address': player.wallet_address
-            } for player in players_with_wallet])
-            st.dataframe(players_df)
-
-            # Predictions for each player associated with the wallet
-            st.markdown('---')
-            st.write("🎲 **Predictions**")
-            for player in players_with_wallet:
-                predictions = session.query(Prediction).filter(Prediction.player_id == player.telegram_id).all()
-                if predictions:
-                    st.write(f"📅 Predictions for Telegram ID: {player.telegram_id}")
-                    predictions_df = pd.DataFrame([{
-                        'Prediction ID': pred.id,
-                        'Insert Date': pred.insert_dt,
-                        'Dice 1': pred.dice_number1,
-                        'Dice 2': pred.dice_number2,
-                        'Slot': pred.slot,
-                        'Is Win': pred.is_win,
-                        'Is Active': pred.is_active
-                    } for pred in predictions])
-                    st.dataframe(predictions_df)
-                else:
-                    st.write(f"😢 No predictions for Telegram ID: {player.telegram_id}")
-
-            # Referrals for each player
-            st.markdown('---')
-            st.write("🤝 **Referrals**")
-            for player in players_with_wallet:
-                referrals = session.query(UserReferral).filter(UserReferral.referrer_id == player.telegram_id).all()
-                if referrals:
-                    st.write(f"📅 Referrals for Telegram ID: {player.telegram_id}")
-                    referrals_df = pd.DataFrame([{
-                        'Referral ID': ref.id,
-                        'Referee ID': ref.referee_id,
-                        'Insert Date': ref.insert_dt
-                    } for ref in referrals])
-                    st.dataframe(referrals_df)
-                else:
-                    st.write(f"😢 No referrals for Telegram ID: {player.telegram_id}")
-
-
-
-def extract_player_information(session):
-    telegram_id_extract_player = st.text_input("🔍 Enter the player Telegram ID")
-
-    if telegram_id_extract_player:
-        try:
-            telegram_id_extract_player = int(telegram_id_extract_player)
-
-            # Fetch player data based on Telegram ID
-            player = session.query(Player).filter(Player.telegram_id == telegram_id_extract_player).first()
-
-            if not player:
-                st.write("😢 Player not found!")
-            else:
+            tab1, tab2, tab3, tab4 = st.tabs([
+                "📊 Static Data",
+                "👥 Connected Players",
+                "🎲 Predictions",
+                "🤝 Referrals"
+            ])
+            
+            with tab1:
                 # Static Data: Calculate total wins and amount won
                 wins_all = 0
                 amount_won = 0
@@ -490,8 +420,8 @@ def extract_player_information(session):
                 # Fetch winners grouped by date
                 winners_grouped = fetch_winners_grouped_by_date(session)
                 for _, row in winners_grouped.iterrows():
-                    if telegram_id_extract_player in row['winners_telegram_ids']:
-                        wins = row['winners_telegram_ids'].count(telegram_id_extract_player)
+                    if wallet_address in row['winners_wallet_addresses']:
+                        wins = row['winners_wallet_addresses'].count(wallet_address)
                         wins_all += wins
                         amount_won += wins * row['amount_per_winner']
 
@@ -499,152 +429,263 @@ def extract_player_information(session):
                 st.write(f"🏆 Winning predictions count: {wins_all}")
                 st.write(f"💰 Amount won: {round(amount_won, 2)}")
 
-                # Player Information
-                st.markdown('---')
-                st.write("👤 **Player Information**")
-                player_df = pd.DataFrame([{
+            with tab2:
+                st.write("👥 **Players Connected to this Wallet**")
+                players_df = pd.DataFrame([{
                     'Telegram ID': player.telegram_id,
                     'Username': player.telegram_username,
                     'First Name': player.first_name,
                     'Wallet Address': player.wallet_address
-                }])
-                st.dataframe(player_df)
+                } for player in players_with_wallet])
+                st.dataframe(players_df)
 
-                # Player Predictions
-                st.markdown('---')
+            with tab3:
                 st.write("🎲 **Predictions**")
-                predictions = session.query(Prediction).filter(Prediction.player_id == telegram_id_extract_player).all()
-                if predictions:
-                    predictions_df = pd.DataFrame([{
-                        'Prediction ID': pred.id,
-                        'Insert Date': pred.insert_dt,
-                        'Dice 1': pred.dice_number1,
-                        'Dice 2': pred.dice_number2,
-                        'Slot': pred.slot,
-                        'Is Win': pred.is_win,
-                        'Is Active': pred.is_active
-                    } for pred in predictions])
-                    st.dataframe(predictions_df)
-                else:
-                    st.write("😢 No predictions found for this player.")
-
-                # Player Referrals
-                st.markdown('---')
-                st.write("🤝 **Referrals**")
-                referrals = session.query(UserReferral).filter(UserReferral.referrer_id == telegram_id_extract_player).all()
-                if referrals:
-                    referrals_df = pd.DataFrame([{
-                        'Referral ID': ref.id,
-                        'Referee ID': ref.referee_id,
-                        'Insert Date': ref.insert_dt
-                    } for ref in referrals])
-                    st.dataframe(referrals_df)
-                else:
-                    st.write("😢 No referrals found for this player.")
-                
-                
-                def extract_wallet():
-                    assets = session.query(Asset).filter(Asset.player_id == telegram_id_extract_player).all()
-                    if assets:
-                        assets_df = pd.DataFrame([{
-                            'Asset ID': asset.id,
-                            'Player ID': asset.player_id,
-                            'Symbol': asset.symbol,
-                            'Balance': asset.balance,
-                            'Decimal': asset.decimal
-                        } for asset in assets])
-                        st.dataframe(assets_df)
+                for player in players_with_wallet:
+                    predictions = session.query(Prediction).filter(Prediction.player_id == player.telegram_id).all()
+                    if predictions:
+                        st.write(f"📅 Predictions for Telegram ID: {player.telegram_id}")
+                        predictions_df = pd.DataFrame([{
+                            'Prediction ID': pred.id,
+                            'Insert Date': pred.insert_dt,
+                            'Dice 1': pred.dice_number1,
+                            'Dice 2': pred.dice_number2,
+                            'Slot': pred.slot,
+                            'Is Win': pred.is_win,
+                            'Is Active': pred.is_active
+                        } for pred in predictions])
+                        st.dataframe(predictions_df)
                     else:
-                        st.write("😢 No money found for this player.")
-                
-                st.markdown('---')
-                st.write("🤑 **Assets**")
-                extract_wallet()
-                
-        except ValueError:
-            st.write("❌ ID must be a number.")
-                      
+                        st.write(f"😢 No predictions for Telegram ID: {player.telegram_id}")
+
+            with tab4:
+                st.write("🤝 **Referrals**")
+                for player in players_with_wallet:
+                    referrals = session.query(UserReferral).filter(UserReferral.referrer_id == player.telegram_id).all()
+                    if referrals:
+                        st.write(f"📅 Referrals for Telegram ID: {player.telegram_id}")
+                        referrals_df = pd.DataFrame([{
+                            'Referral ID': ref.id,
+                            'Referee ID': ref.referee_id,
+                            'Insert Date': ref.insert_dt
+                        } for ref in referrals])
+                        st.dataframe(referrals_df)
+                    else:
+                        st.write(f"😢 No referrals for Telegram ID: {player.telegram_id}")
+
+
+
+def extract_player_information(session):
+    search_tab1, search_tab2 = st.tabs([
+        "🔍 Search by ID",
+        "👤 Search by Username"
+    ])
+    
+    selected_telegram_id = None
+    
+    with search_tab1:
+        telegram_id_extract_player = st.text_input("🔍 Enter the player Telegram ID")
+        if telegram_id_extract_player:
+            try:
+                selected_telegram_id = int(telegram_id_extract_player)
+            except ValueError:
+                st.write("❌ ID must be a number.")
+    
+    with search_tab2:
+        username_search = st.text_input("👤 Enter the player Username")
+        if username_search:
+            # Search for players with matching username (case-insensitive)
+            matching_players = session.query(Player).filter(
+                func.lower(Player.telegram_username).contains(func.lower(username_search))
+            ).all()
+            
+            if not matching_players:
+                st.write("😢 No players found with this username!")
+            else:
+                st.write(f"Found {len(matching_players)} matching players:")
+                for idx, player in enumerate(matching_players, 1):
+                    col1, col2 = st.columns([3, 1])
+                    with col1:
+                        st.write(f"{idx}. ID: {player.telegram_id}, Username: @{player.telegram_username}")
+                    with col2:
+                        if st.button("Select", key=f"select_player_{player.telegram_id}"):
+                            selected_telegram_id = player.telegram_id
+
+    # Create container for player info display after search section
+    if selected_telegram_id:
+        st.markdown("---")
+        display_player_info(selected_telegram_id, session)
+
+
+def display_player_info(telegram_id_extract_player, session):
+    # Fetch player data based on Telegram ID
+    player = session.query(Player).filter(Player.telegram_id == telegram_id_extract_player).first()
+
+    if not player:
+        st.write("😢 Player not found!")
+    else:
+        tab1, tab2, tab3, tab4, tab5 = st.tabs([
+            "📊 Static Data",
+            "👤 Player Info",
+            "🎲 Predictions",
+            "🤝 Referrals",
+            "🤑 Assets"
+        ])
+        
+        with tab1:
+            # Static Data: Calculate total wins and amount won
+            wins_all = 0
+            amount_won = 0
+
+            # Fetch winners grouped by date
+            winners_grouped = fetch_winners_grouped_by_date(session)
+            for _, row in winners_grouped.iterrows():
+                if telegram_id_extract_player in row['winners_telegram_ids']:
+                    wins = row['winners_telegram_ids'].count(telegram_id_extract_player)
+                    wins_all += wins
+                    amount_won += wins * row['amount_per_winner']
+
+            st.write("📊 **Static Data**")
+            st.write(f"🏆 Winning predictions count: {wins_all}")
+            st.write(f"💰 Amount won: {round(amount_won, 2)}")
+
+        with tab2:
+            st.write("👤 **Player Information**")
+            player_df = pd.DataFrame([{
+                'Telegram ID': player.telegram_id,
+                'Username': player.telegram_username,
+                'First Name': player.first_name,
+                'Wallet Address': player.wallet_address
+            }])
+            st.dataframe(player_df)
+
+        with tab3:
+            st.write("🎲 **Predictions**")
+            predictions = session.query(Prediction).filter(Prediction.player_id == telegram_id_extract_player).all()
+            if predictions:
+                predictions_df = pd.DataFrame([{
+                    'Prediction ID': pred.id,
+                    'Insert Date': pred.insert_dt,
+                    'Dice 1': pred.dice_number1,
+                    'Dice 2': pred.dice_number2,
+                    'Slot': pred.slot,
+                    'Is Win': pred.is_win,
+                    'Is Active': pred.is_active
+                } for pred in predictions])
+                st.dataframe(predictions_df)
+            else:
+                st.write("😢 No predictions found for this player.")
+
+        with tab4:
+            st.write("🤝 **Referrals**")
+            referrals = session.query(UserReferral).filter(UserReferral.referrer_id == telegram_id_extract_player).all()
+            if referrals:
+                referrals_df = pd.DataFrame([{
+                    'Referral ID': ref.id,
+                    'Referee ID': ref.referee_id,
+                    'Insert Date': ref.insert_dt
+                } for ref in referrals])
+                st.dataframe(referrals_df)
+            else:
+                st.write("😢 No referrals found for this player.")
+
+        with tab5:
+            st.write("🤑 **Assets**")
+            assets = session.query(Asset).filter(Asset.player_id == telegram_id_extract_player).all()
+            if assets:
+                assets_df = pd.DataFrame([{
+                    'Asset ID': asset.id,
+                    'Player ID': asset.player_id,
+                    'Symbol': asset.symbol,
+                    'Balance': asset.balance,
+                    'Decimal': asset.decimal
+                } for asset in assets])
+                st.dataframe(assets_df)
+            else:
+                st.write("😢 No money found for this player.")
 
 
 def assets_section(session):
+    tab1, tab2, tab3, tab4 = st.tabs([
+        "💰 All Assets",
+        "💵 Active Wallets",
+        "💸 USD Values",
+        "📊 Histogram"
+    ])
     
-    query = session.query(
-        Asset.symbol,
-        func.count(Asset.id).label('total_repeats'),
-        func.avg(Asset.price).label('average_price')
-    ).group_by(Asset.symbol).order_by(desc('total_repeats'))
+    with tab1:
+        st.write("💰 **Table of All Assets**")
+        query = session.query(
+            Asset.symbol,
+            func.count(Asset.id).label('total_repeats'),
+            func.avg(Asset.price).label('average_price')
+        ).group_by(Asset.symbol).order_by(desc('total_repeats'))
+        
+        result_df = fetch_data(query, session)
+        st.dataframe(result_df)
     
-    st.write("💰 **Table of All Assets**")
-    result_df = fetch_data(query, session)
-    st.dataframe(result_df)
+    with tab2:
+        st.write('💵 **Active Wallets Data**')
+        all_wallets = session.query(Player).filter(Player.wallet_address.isnot(None)).count()
+        active_wallets = result_df.iloc[0]['total_repeats']
+        inactive_wallets = all_wallets - active_wallets
+        ratio_active_wallets = active_wallets / all_wallets
+        ratio_inactive_wallets = inactive_wallets / all_wallets
+        
+        st.write(f'All wallets: {all_wallets}')
+        st.write(f'Active wallets: {active_wallets}')
+        st.write(f'Inactive wallets: {inactive_wallets}')
+        st.write(f'Active wallets ratio: {100 * round(ratio_active_wallets, 4)} \%')
+        st.write(f'Inactive wallets ratio: {100 * round(ratio_inactive_wallets, 4)} \%')
     
+    with tab3:
+        st.write("💵 **USD Value of Each Player - Sorted**")
+        player_assets_query = session.query(
+            Player.telegram_id,
+            Player.telegram_username,
+            Player.first_name,
+            func.sum(Asset.usd_value).label('total_usd_value'),
+            Player.wallet_address
+        ).join(Asset, Player.telegram_id == Asset.player_id) \
+            .group_by(Player.telegram_id) \
+            .order_by(desc('total_usd_value'))
+        
+        player_assets_df = fetch_data(player_assets_query, session)
+        st.dataframe(player_assets_df)
     
-    st.markdown('---')
-    st.write('💵 **Active Wallets Data**')
-    all_wallets = session.query(Player).filter(Player.wallet_address.isnot(None)).count()
-    active_wallets = result_df.iloc[0]['total_repeats']
-    inactive_wallets = all_wallets - active_wallets
-    ratio_active_wallets = active_wallets / all_wallets
-    ratio_inactive_wallets = inactive_wallets / all_wallets
-    
-    st.write(f'All wallets: {all_wallets}')
-    st.write(f'Active wallets: {active_wallets}')
-    st.write(f'Inactive wallets: {inactive_wallets}')
-    st.write(f'Active wallets ratio: {100 * round(ratio_active_wallets, 4)} \%')
-    st.write(f'Inactive wallets ratio: {100 * round(ratio_inactive_wallets, 4)} \%')
+    with tab4:
+        st.write("📊 **Histogram of Wallets**")
+        total_usd_values = player_assets_df['total_usd_value']
+        
+        # histogram
+        interval = st.number_input("Select interval size for histogram", min_value=0.1, value=0.2, step=0.1)
+        maximum = st.number_input("Select maximum value for histogram", min_value=0, value=100, step=1)
+        filtered_usd_values = total_usd_values[total_usd_values <= maximum]
+        total_discarded_values = len(total_usd_values) - len(filtered_usd_values)
+        st.write(f'Max is {total_usd_values.max()}')
+        st.write(f'{total_discarded_values} values are discarded')
+        fig_usd_histogram = go.Figure()
 
-    
-    st.markdown('---')
-    st.write("💵 **USD Value of Each Player - Sorted**")
-    
-    
-    player_assets_query = session.query(
-        Player.telegram_id,
-        Player.telegram_username,
-        Player.first_name,
-        func.sum(Asset.usd_value).label('total_usd_value'),
-        Player.wallet_address
-    ).join(Asset, Player.telegram_id == Asset.player_id) \
-        .group_by(Player.telegram_id) \
-        .order_by(desc('total_usd_value'))
-    
-    player_assets_df = fetch_data(player_assets_query, session)
-    st.dataframe(player_assets_df)
-    
-    
-    st.markdown('---')
-    st.write("📊 **Histogram of Wallets**")
-    total_usd_values = player_assets_df['total_usd_value']
-    
-    # histogram
-    interval = st.number_input("Select interval size for histogram", min_value=0.1, value=0.2, step=0.1)
-    maximum = st.number_input("Select maximum value for histogram", min_value=0, value=100, step=1)
-    filtered_usd_values = total_usd_values[total_usd_values <= maximum]
-    total_discarded_values = len(total_usd_values) - len(filtered_usd_values)
-    st.write(f'Max is {total_usd_values.max()}')
-    st.write(f'{total_discarded_values} values are discarded')
-    fig_usd_histogram = go.Figure()
+        fig_usd_histogram.add_trace(go.Histogram(
+            x=filtered_usd_values,
+            xbins=dict(
+                start=0,
+                end=maximum,
+                size=interval  # 5 USD intervals
+            ),
+            marker_color='#1f77b4',
+            opacity=0.75
+        ))
 
-    fig_usd_histogram.add_trace(go.Histogram(
-        x=filtered_usd_values,
-        xbins=dict(
-            start=0,
-            end=maximum,
-            size=interval  # 5 USD intervals
-        ),
-        marker_color='#1f77b4',
-        opacity=0.75
-    ))
+        fig_usd_histogram.update_layout(
+            title="Histogram of USD Value of Each Player",
+            xaxis_title="Total USD Value",
+            yaxis_title="Frequency",
+            template="plotly_dark",
+            showlegend=False
+        )
 
-    fig_usd_histogram.update_layout(
-        title="Histogram of USD Value of Each Player",
-        xaxis_title="Total USD Value",
-        yaxis_title="Frequency",
-        template="plotly_dark",
-        showlegend=False
-    )
-
-    st.plotly_chart(fig_usd_histogram)
+        st.plotly_chart(fig_usd_histogram)
 
 
 
