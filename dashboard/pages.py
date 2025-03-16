@@ -19,12 +19,19 @@ def data_sheets_page(session, session_dashboard, DEBUG):
     st.title("📄 Data Sheets")
     df_analyzed_data = fetch_analyzed_data_grouped_by_date(session, session_dashboard, DEBUG)
     df_winners_grouped = fetch_winners_grouped_by_date(session)
-    st.markdown('---')
-    st.write("📋 Analyzed Data")
-    st.dataframe(df_analyzed_data.iloc[::-1])
-    st.markdown('---')
-    st.write("🏆 Winners Data")
-    st.dataframe(df_winners_grouped)
+    
+    tab1, tab2 = st.tabs([
+        "📋 Analyzed Data",
+        "🏆 Winners Data"
+    ])
+    
+    with tab1:
+        st.write("📋 Analyzed Data")
+        st.dataframe(df_analyzed_data.iloc[::-1])
+    
+    with tab2:
+        st.write("🏆 Winners Data")
+        st.dataframe(df_winners_grouped)
 
 def giveaways_page(session):
     st.title("🎁 Giveaways")
