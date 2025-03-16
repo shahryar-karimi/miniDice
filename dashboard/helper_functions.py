@@ -9,7 +9,6 @@ import plotly.graph_objects as go
 from plotly.subplots import make_subplots
 from datetime import datetime, timedelta
 from sqlalchemy import func, distinct, case, desc
-import pyperclip
 
 
 # Helper function to fetch data from the database
@@ -239,14 +238,18 @@ def player_giveaway(players, selected_date):
             st.write(f"📛 First Name: `{player.first_name}`")
             st.write(f"💳 Wallet Address: `{player.wallet_address}`")
             
-            # Add copy button
-            if st.button("Copy", key="export_player"):
-                export_text = f"""Telegram ID: {player.telegram_id}
+            # Create text for copying
+            export_text = f"""Telegram ID: {player.telegram_id}
 Username: {player.telegram_username}
 First Name: {player.first_name}
 Wallet Address: {player.wallet_address}"""
-                pyperclip.copy(export_text)
-                st.toast("Data copied to clipboard!")
+            
+            st.text_area(
+                "Player information (select and copy)",
+                value=export_text,
+                height=100,
+                key="copy_player_info"
+            )
     else:
         st.write("😢 No players made predictions on the selected date.")
 
@@ -265,14 +268,18 @@ def referrer_giveaway(referrals, selected_date):
             st.write(f"📛 First Name: `{referrer.referrer_ref.first_name}`")
             st.write(f"💳 Wallet Address: `{referrer.referrer_ref.wallet_address}`")
             
-            # Add copy button
-            if st.button("Copy", key="export_referrer"):
-                export_text = f"""Telegram ID: {referrer.referrer_id}
+            # Create text for copying
+            export_text = f"""Telegram ID: {referrer.referrer_id}
 Username: {referrer.referrer_ref.telegram_username}
 First Name: {referrer.referrer_ref.first_name}
 Wallet Address: {referrer.referrer_ref.wallet_address}"""
-                pyperclip.copy(export_text)
-                st.toast("Data copied to clipboard!")
+            
+            st.text_area(
+                "Referrer information (select and copy)",
+                value=export_text,
+                height=100,
+                key="copy_referrer_info"
+            )
     else:
         st.write("😢 No referrers made referrals on the selected date.")
 
