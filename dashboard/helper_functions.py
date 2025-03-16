@@ -1,7 +1,7 @@
 import pandas as pd
 import numpy as np
 from models import Player, Prediction, Report, UserReferral, Asset
-from sqlalchemy import distinct, case, desc, func
+from sqlalchemy import distinct, case, desc, func, and_
 import streamlit as st
 import sympy as sp
 import random
@@ -1297,3 +1297,67 @@ def fetch_top_players(session, search_term=None, search_type=None):
     
     df = fetch_data(query, session)
     return df
+
+def fetch_wallet_based_points(session):
+    """
+    Calculate points for each unique wallet based on the maximum points of connected players.
+    Returns a DataFrame with wallet address, telegram_id of max points player, and assigned points.
+    """
+    # Subquery for counting wins
+    wins_subquery = session.query(
+        Prediction.player_id,
+        func.count(Prediction.id).label('wins_count')
+    ).filter(Prediction.is_win == True).group_by(Prediction.player_id).subquery()
+    
+    # Subquery for counting predictions
+    predictions_subquery = session.query(
+        Prediction.player_id,
+        func.count(Prediction.id).label('predictions_count')
+    ).group_by(Prediction.player_id).subquery()
+    
+    # Subquery for counting referrals
+    referrals_subquery = session.query(
+        UserReferral.referrer_id,
+        func.count(UserReferral.id).label('referrals_count')
+    ).group_by(UserReferral.referrer_id).subquery()
+    
+    # Calculate points for each player
+    player_points_subquery = session.query(
+        Player.telegram_id,
+        Player.wallet_address,
+        (
+            5 +  # Base points
+            case(
+                (Player.wallet_address.isnot(None), 500),
+                else_=0
+            ) +  # Wallet points
+            (50 * func.coalesce(wins_subquery.c.wins_count, 0)) +  # Win points
+            func.coalesce(predictions_subquery.c.predictions_count, 0) +  # Prediction points
+            (5 * func.coalesce(referrals_subquery.c.referrals_count, 0))  # Referral points
+        ).label('points')
+    ).outerjoin(wins_subquery, Player.telegram_id == wins_subquery.c.player_id) \
+     .outerjoin(predictions_subquery, Player.telegram_id == predictions_subquery.c.player_id) \
+     .outerjoin(referrals_subquery, Player.telegram_id == referrals_subquery.c.referrer_id) \
+     .filter(Player.wallet_address.isnot(None)) \
+     .subquery()
+    
+    # Get maximum points per wallet
+    max_points_subquery = session.query(
+        player_points_subquery.c.wallet_address,
+        func.max(player_points_subquery.c.points).label('max_points')
+    ).group_by(player_points_subquery.c.wallet_address).subquery()
+    
+    # Get the telegram_id with maximum points for each wallet
+    final_query = session.query(
+        player_points_subquery.c.wallet_address,
+        player_points_subquery.c.telegram_id.label('max_points_telegram_id'),
+        player_points_subquery.c.points.label('assigned_points')
+    ).join(
+        max_points_subquery,
+        and_(
+            player_points_subquery.c.wallet_address == max_points_subquery.c.wallet_address,
+            player_points_subquery.c.points == max_points_subquery.c.max_points
+        )
+    )
+    
+    return fetch_data(final_query, session)

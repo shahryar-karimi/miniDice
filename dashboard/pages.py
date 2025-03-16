@@ -6,7 +6,7 @@ sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 import streamlit as st
 import streamlit.components.v1 as components
-from helper_functions import fetch_analyzed_data_grouped_by_date, fetch_winners_grouped_by_date, fetch_data_for_date, plot_graphs, plot_histograms, extract_wallet_information, extract_player_information, success_story, assets_section, player_giveaway, referrer_giveaway, plot_frequent_graphs, fetch_hours_histogram, fetch_top_players
+from helper_functions import fetch_analyzed_data_grouped_by_date, fetch_winners_grouped_by_date, fetch_data_for_date, plot_graphs, plot_histograms, extract_wallet_information, extract_player_information, success_story, assets_section, player_giveaway, referrer_giveaway, plot_frequent_graphs, fetch_hours_histogram, fetch_top_players, fetch_wallet_based_points
 from datetime import datetime, timedelta
 import plotly.graph_objects as go
 import pandas as pd
@@ -93,11 +93,12 @@ def frequent_graphs_page(session, session_dashboard, DEBUG):
 def top_players_page(session):
     st.title("🏆 Top Players")
     
-    tab1, tab2, tab3, tab4 = st.tabs([
+    tab1, tab2, tab3, tab4, tab5 = st.tabs([
         "🔍 Search Players",
         "📝 Check Wallet List",
         "🔄 Map Wallets to Unique IDs",
-        "📊 Wallet Address Analysis"
+        "📊 Wallet Address Analysis",
+        "💰 Wallet-Based Points"
     ])
     
     with tab1:
@@ -382,6 +383,45 @@ def top_players_page(session):
             if not multiple_occurrences.empty:
                 st.write("⚠️ Addresses that appear multiple times:")
                 st.dataframe(multiple_occurrences)
+
+    with tab5:
+        st.write("💰 Wallet-Based Points Analysis")
+        st.write("This tab shows the maximum points assigned to each unique wallet based on the highest points among connected players.")
+        
+        # Fetch wallet-based points data
+        df_wallet_points = fetch_wallet_based_points(session)
+        
+        # Add metrics
+        col1, col2, col3 = st.columns(3)
+        with col1:
+            st.metric("Total Unique Wallets", len(df_wallet_points))
+        with col2:
+            st.metric("Total Assigned Points", df_wallet_points['assigned_points'].sum())
+        with col3:
+            st.metric("Average Points per Wallet", round(df_wallet_points['assigned_points'].mean(), 2))
+        
+        # Display the dataframe
+        st.write("📊 Wallet Points Data")
+        st.dataframe(df_wallet_points)
+        
+        # Create a histogram of points distribution
+        fig = go.Figure(data=[
+            go.Histogram(
+                x=df_wallet_points['assigned_points'],
+                nbinsx=50,
+                marker_color='#1f77b4',
+                opacity=0.75
+            )
+        ])
+        
+        fig.update_layout(
+            title="Distribution of Wallet Points",
+            xaxis_title="Points",
+            yaxis_title="Number of Wallets",
+            template="plotly_dark"
+        )
+        
+        st.plotly_chart(fig)
 
 # def test_page():
 #     st.title("Test Page")

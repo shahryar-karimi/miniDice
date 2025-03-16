@@ -5,7 +5,7 @@ import os
 DEBUG, STREAMLIT_PASSWORD, TGSTAT_APIKEY, session, session_dashboard, llm = load_items()
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from libs.tgstat_client import TGStatClient
+from dashboard.tgstat_client import TGStatClient
 
 client = TGStatClient(TGSTAT_APIKEY)
 
