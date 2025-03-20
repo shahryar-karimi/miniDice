@@ -11,8 +11,10 @@ from pages import (
     success_story_page,
     assets_page,
     frequent_graphs_page,
-    top_players_page
+    top_players_page,
+    tgstat_analytics_page
 )
+from dashboard.tgstat_client import TGStatClient
 
 
 def main():
@@ -33,6 +35,9 @@ def main():
     else:
         st.title("📊 Analytics Dashboard")
 
+        # Initialize TGStat client
+        tgstat_client = TGStatClient(TGSTAT_APIKEY)
+
         # Sidebar navigation
         if 'page' not in st.session_state:
             st.session_state.page = "Frequent Graphs"
@@ -48,8 +53,7 @@ def main():
             "Success Story": lambda: success_story_page(session, llm),
             "Assets": lambda: assets_page(session),
             "Top Players": lambda: top_players_page(session),
-            # "TGStat Analytics": lambda: tgstat_analytics_page(session, TGSTAT_APIKEY),
-            # "Test": lambda: test_page()
+            "TGStat Analytics": lambda: tgstat_analytics_page(tgstat_client),
         }
 
         selected_page = st.sidebar.selectbox(
