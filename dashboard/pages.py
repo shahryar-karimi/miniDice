@@ -7,6 +7,7 @@ sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 import streamlit as st
 import streamlit.components.v1 as components
 from helper_functions import fetch_analyzed_data_grouped_by_date, fetch_winners_grouped_by_date, fetch_data_for_date, plot_graphs, plot_histograms, extract_wallet_information, extract_player_information, success_story, assets_section, player_giveaway, referrer_giveaway, plot_frequent_graphs, fetch_hours_histogram, fetch_top_players, fetch_wallet_based_points
+from tgstat_helper_functions import plot_tgstat_channel_info, plot_tgstat_channel_stats, plot_tgstat_subscribers_growth, get_channel_posts_with_dates, compare_stats_between_posts
 from datetime import datetime, timedelta
 import plotly.graph_objects as go
 import pandas as pd
@@ -423,17 +424,139 @@ def top_players_page(session):
         
         st.plotly_chart(fig)
 
-# def test_page():
-#     st.title("Test Page")
-#     st.image("https://tgstat.ru/channel/@dicemaniacs/stat-widget.png")
-
-# def tgstat_analytics_page(session, TGSTAT_APIKEY):
-#     st.title("🔍 TGStat Analytics")
-#     client = TGStatClient(TGSTAT_APIKEY)
-#     plot_tgstat_channel_info(client, "dicemaniacs")
-#     plot_tgstat_channel_stats(client, "dicemaniacs")
-#     plot_tgstat_subscribers_growth(client, "dicemaniacs")
-#     plot_tgstat_views_by_hours(client, "dicemaniacs")
-#     plot_tgstat_audience_geography(client, "dicemaniacs")
+def tgstat_analytics_page(client, channel="dicemaniacs"):
+    st.title("📊 TGStat Channel Analytics")
     
+    # Allow custom channel input
+    custom_channel = st.text_input("Enter channel username (without @)", value=channel)
+    
+    if custom_channel:
+        channel = custom_channel.strip().replace("@", "")
+        
+        # Create tabs for different analytics views
+        tab1, tab2, tab3, tab4 = st.tabs([
+            "📈 Channel Overview",
+            "🔍 Channel Subcribers",
+            "🔍 Post Analysis",
+            "📊 Posts Comparison"
+        ])
+        
+        with tab1:
+            st.subheader("Channel Overview")
+            plot_tgstat_channel_info(client, channel)
+            plot_tgstat_channel_stats(client, channel)
+            
+        with tab2:
+            st.subheader("Channel Subscribers")
+            plot_tgstat_subscribers_growth(client, channel)
+            
+        with tab3:
+            st.subheader("Post Analysis")
+            
+            # Get recent posts for selection
+            posts = get_channel_posts_with_dates(client, channel, limit=50)
+            
+            if posts:
+                # Format post options for dropdown
+                post_options = [f"{post['date']} - {post['summary']}" for post in posts]
+                
+                # Display post selection dropdown
+                selected_post_idx = st.selectbox(
+                    "Select a post to analyze",
+                    options=range(len(post_options)),
+                    format_func=lambda i: post_options[i]
+                )
+                
+                selected_post = posts[selected_post_idx]
+                
+                # Display selected post details
+                st.write("### Selected Post Details")
+                st.write(f"**Date:** {selected_post['date']}")
+                st.write(f"**ID:** {selected_post['id']}")
+                
+                # Display post content
+                if 'text' in selected_post['full_post']:
+                    st.write("**Content:**")
+                    st.markdown(selected_post['full_post']['text'], unsafe_allow_html=True)
+                
+                # Display post stats
+                if 'views' in selected_post['full_post']:
+                    st.metric("Views", selected_post['full_post']['views'])
+                
+                try:
+                    # Get post statistics
+                    post_stats = client.get_post_stats(selected_post['id'])
+                    
+                    if 'status' in post_stats and post_stats['status'] == 'ok' and 'response' in post_stats:
+                        stats = post_stats['response']
+                        
+                        # Display stats metrics
+                        col1, col2, col3, col4 = st.columns(4)
+                        
+                        with col1:
+                            if 'forwards_count' in stats:
+                                st.metric("Forwards", stats['forwards_count'])
+                        
+                        with col2:
+                            if 'mentions_count' in stats:
+                                st.metric("Mentions", stats['mentions_count'])
+                                
+                        with col3:
+                            if 'views_per_subscriber' in stats:
+                                st.metric("Views per Subscriber", f"{stats['views_per_subscriber']:.2f}")
+                                
+                        with col4:
+                            if 'reach_per_post' in stats:
+                                st.metric("Reach per Post", stats['reach_per_post'])
+                except Exception as e:
+                    st.error(f"Error fetching post stats: {str(e)}")
+            else:
+                st.warning("No posts found for this channel")
+        
+        with tab4:
+            pass
+            
+    #         st.subheader("Compare Statistics Between Posts")
+            
+    #         # Get recent posts for selection
+    #         posts = get_channel_posts_with_dates(client, channel, limit=50)
+            
+    #         if posts:
+    #             # Format post options for dropdown
+    #             post_options = [f"{post['date']} - {post['summary']}" for post in posts]
+                
+    #             # Create two columns for post selection
+    #             col1, col2 = st.columns(2)
+                
+    #             with col1:
+    #                 st.write("### Select Starting Post")
+    #                 start_post_idx = st.selectbox(
+    #                     "Choose first post",
+    #                     options=range(len(post_options)),
+    #                     format_func=lambda i: post_options[i],
+    #                     key="start_post"
+    #                 )
+                
+    #             with col2:
+    #                 st.write("### Select Ending Post")
+    #                 # Default to a post that's a week later than the start post if possible
+    #                 default_end_idx = min(start_post_idx + 7, len(posts) - 1)
+    #                 end_post_idx = st.selectbox(
+    #                     "Choose second post",
+    #                     options=range(len(post_options)),
+    #                     index=default_end_idx,
+    #                     format_func=lambda i: post_options[i],
+    #                     key="end_post"
+    #                 )
+                
+    #             start_post = posts[start_post_idx]
+    #             end_post = posts[end_post_idx]
+                
+    #             if st.button("📊 Compare Statistics"):
+    #                 compare_stats_between_posts(client, channel, start_post['id'], end_post['id'])
+    #         else:
+    #             st.warning("No posts found for this channel")
+    # else:
+    #     st.warning("Please enter a valid channel username to analyze")
+
     
