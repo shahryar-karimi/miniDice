@@ -14,7 +14,7 @@ from pages import (
     top_players_page,
     tgstat_analytics_page
 )
-from dashboard.tgstat_client import TGStatClient
+from .tgstat_client import TGStatClient
 
 
 def main():
