@@ -78,7 +78,7 @@ services:
       dockerfile: Dockerfile
     container_name: streamlit_dashboard
     ports:
-      - "8501:8501"
+      - "8502:8501"
     env_file:
       - ./dashboard/.env
     networks:
